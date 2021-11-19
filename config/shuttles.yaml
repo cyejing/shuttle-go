@@ -5,25 +5,21 @@ ssl:
 routes:
   - id: 196105db9a384d7a93f8102ae46684cb
     order: 100
-    host: mini.cyejing.cn
+    host: localhost:4842
     filters:
-      - name: headers
-        param:
-          setHeaders:
-            - host,www.baidu.com
       - name: proxy
-        param:
-          uri: "rlb://example"
+        params:
+          uri: "http://localhost:8890"
   - id: f1xb758a1hsrkguxtryjjt4swakayrf8
     order: 20
     path: /static
     filters:
       - name: rewrite
-        param:
+        params:
           regex: "/file/(.*)"
           replacement: "/$1"
       - name: resource
-        param:
+        params:
           root: "./"
 instances:
   - group: example

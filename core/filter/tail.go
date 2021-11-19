@@ -1,18 +1,31 @@
-package main
+package filter
 
 import (
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/log"
 	"net/http"
 )
 
-func main() {
-	http.HandleFunc("/", writeSelf)
-	http.ListenAndServe("127.0.0.1:8890", nil)
+type TailFilter struct {
+	name string
+}
+
+var tailFilter = &TailFilter{name: "tail"}
+
+func init() {
+	RegistryFilter(tailFilter)
+}
+
+func (t TailFilter) Name() string {
+	return t.name
+}
+
+func (t TailFilter) Filter(chain *Chain, exchange *Exchange, config interface{}) error {
+	exchange.Completed = true
+	writeSelf(exchange.Resp, exchange.Req)
+	return nil
 }
 
 func writeSelf(resp http.ResponseWriter, req *http.Request) {
-	log.Debugf("request %s", req.RequestURI)
 	fmt.Fprintf(resp, "%s %s %s\n", req.Method, req.URL, req.Proto)
 	for k, v := range req.Header {
 		fmt.Fprintf(resp, "Header[%q] = %q\n", k, v)

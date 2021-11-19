@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	Addr      string `yaml:"addr"`
-	Ssl       Ssl
+	Ssl       *Ssl
 	Routes    []Route
 	Instances []Instance
 }
@@ -20,6 +20,15 @@ type Route struct {
 	Path     string
 	Filters  []Filter
 	Loggable bool
+}
+
+func (r Route) GetFilter(name string) Filter {
+	for _, filter := range r.Filters {
+		if name == filter.Name {
+			return filter
+		}
+	}
+	return *new(Filter)
 }
 
 type Instance struct {
@@ -48,7 +57,7 @@ var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "config/shuttles.yaml", "config/shuttles.yml"}
 	globalConfig      = &Config{
 		Addr: "127.0.0.1:4843",
-		Ssl:  Ssl{Enable: true},
+		Ssl:  &Ssl{Enable: true},
 	}
 )
 
