@@ -1,0 +1,29 @@
+addr: 127.0.0.1:4843
+ssl:
+  enable: false
+routes:
+  - id: 196105db9a384d7a93f8102ae46684cb
+    order: 100
+    host: mini.cyejing.cn
+    filters:
+      - name: headers
+        param:
+          setHeaders:
+            - host,www.baidu.com
+      - name: proxy
+        param:
+          uri: "rlb://example"
+  - id: f1xb758a1hsrkguxtryjjt4swakayrf8
+    order: 20
+    path: /static
+    filters:
+      - name: rewrite
+        param:
+          regex: "/file/(.*)"
+          replacement: "/$1"
+      - name: resource
+        param:
+          root: "./"
+instances:
+  - group: example
+    uri: https://www.baidu.com
