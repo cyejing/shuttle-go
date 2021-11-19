@@ -39,6 +39,7 @@ type Filter struct {
 
 type Ssl struct {
 	Enable bool
+	Addr   string
 	Cert   string
 	Key    string
 }

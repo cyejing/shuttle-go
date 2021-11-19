@@ -17,5 +17,5 @@ func main() {
 		panic(err)
 	}
 	log.Debugf("load config %v", config.GetConfig())
-	server.StartWebServer(config.GetConfig().Addr)
+	server.StartWebServer()
 }

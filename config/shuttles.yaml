@@ -1,5 +1,6 @@
-addr: 127.0.0.1:4843
+addr: 127.0.0.1:4842
 ssl:
+  addr: 127.0.0.1:4843
   enable: false
 routes:
   - id: 196105db9a384d7a93f8102ae46684cb
