@@ -4,13 +4,15 @@ import (
 	"context"
 	"github.com/cyejing/shuttle/pkg/config"
 	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/goinggo/mapstructure"
 	"net/http"
 	"sync"
 )
 
 type Filter interface {
+	Init()
 	Name() string
-	Filter(chain *Chain, exchange *Exchange, config interface{}) error
+	Filter(exchange *Exchange, c interface{}) error
 }
 
 type Exchange struct {
@@ -41,6 +43,12 @@ func RegistryFilter(filter Filter) {
 	registryFilters[filter.Name()] = filter
 }
 
+func Init() {
+	for _, filter := range registryFilters {
+		filter.Init()
+	}
+}
+
 func NewChain(resp http.ResponseWriter, req *http.Request, route config.Route) *Chain {
 	var filters = make([]Filter, len(route.Filters))
 	for i, filter := range route.Filters {
@@ -60,18 +68,19 @@ func NewChain(resp http.ResponseWriter, req *http.Request, route config.Route) *
 }
 
 func (c *Chain) DoFilter() {
-	if c.Exchange.Completed || c.Index >= len(c.Filters) {
-		complete(c.Exchange)
-		return
-	}
 
-	f := c.Filters[c.Index]
-	c.Index++
-	fc := c.Route.GetFilter(f.Name())
-	err := f.Filter(c, c.Exchange, fc.Params)
-	if err != nil {
-		c.Exchange.Error(err)
-		complete(c.Exchange)
+	for _, f := range c.Filters {
+		fc := c.Route.GetFilter(f.Name())
+		err := f.Filter(c.Exchange, fc.Params)
+		if err != nil {
+			c.Exchange.Error(err)
+			complete(c.Exchange)
+		}
+
+		if c.Exchange.Completed {
+			complete(c.Exchange)
+			return
+		}
 	}
 
 }
@@ -79,7 +88,10 @@ func (c *Chain) DoFilter() {
 func complete(exchange *Exchange) {
 	if exchange.Err != nil {
 		log.Error(exchange.Err)
-	} else {
-		log.Debug("complete")
 	}
+	log.Debug("complete")
+}
+
+func mapstruct(c interface{}, config interface{}) error {
+	return mapstructure.Decode(c, config)
 }

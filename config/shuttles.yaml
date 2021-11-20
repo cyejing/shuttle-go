@@ -2,25 +2,35 @@ addr: 127.0.0.1:4842
 ssl:
   addr: 127.0.0.1:4843
   enable: false
+passwords:
+  - cyejing123
 routes:
   - id: 196105db9a384d7a93f8102ae46684cb
     order: 100
-    host: localhost:4842
+    host: localhost1:4842
     filters:
       - name: proxy
         params:
-          uri: "http://localhost:8890"
+          uri: "http://localhost:8088"
   - id: f1xb758a1hsrkguxtryjjt4swakayrf8
-    order: 20
+    order: 120
     path: /static
     filters:
       - name: rewrite
         params:
-          regex: "/file/(.*)"
+          regex: "/static/(.*)"
           replacement: "/$1"
       - name: resource
         params:
-          root: "./"
+          root: ""
+  - id: asdas
+    order: 200
+    host: localhost:4842
+    filters:
+      - name: socks
+      - name: resource
+        params:
+          root: ""
 instances:
   - group: example
     uri: https://www.baidu.com

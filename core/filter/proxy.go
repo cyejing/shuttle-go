@@ -1,42 +1,44 @@
 package filter
 
 import (
-	"github.com/goinggo/mapstructure"
 	"io"
 	"net/http"
 	"net/url"
 )
 
-type ProxyFilter struct {
+type proxy struct {
 	name string
 }
 
-type Config struct {
+type ProxyConfig struct {
 	Uri string
 }
 
-var proxyFilter = &ProxyFilter{name: "proxy"}
 var client = http.DefaultClient
 
 func init() {
-	RegistryFilter(proxyFilter)
+	RegistryFilter(&proxy{name: "proxy"})
 }
 
-func (p ProxyFilter) Name() string {
+func (p proxy) Name() string {
 	return p.name
 }
 
-func (p ProxyFilter) Filter(chain *Chain, exchange *Exchange, c interface{}) error {
-	var config Config
-	if err := mapstructure.Decode(c, &config); err != nil {
+func (p proxy) Init() {
+}
+
+func (p proxy) Filter(exchange *Exchange, c interface{}) error {
+	var config ProxyConfig
+	if err := mapstruct(c, &config); err != nil {
 		return err
 	}
-	url, err := url.Parse(config.Uri + exchange.Req.RequestURI)
+
+	u, err := url.Parse(config.Uri + exchange.Req.URL.Path)
 	if err != nil {
 		return err
 	}
 
-	exchange.Req.URL = url
+	exchange.Req.URL = u
 	exchange.Req.RequestURI = ""
 
 	r, err := client.Do(exchange.Req)
@@ -48,8 +50,10 @@ func (p ProxyFilter) Filter(chain *Chain, exchange *Exchange, c interface{}) err
 	for k, v := range r.Header {
 		exchange.Resp.Header().Set(k, v[0])
 	}
-	io.Copy(exchange.Resp, r.Body)
+	_, err = io.Copy(exchange.Resp, r.Body)
+	if err != nil {
+		return err
+	}
 
-	chain.DoFilter()
 	return nil
 }

@@ -5,21 +5,22 @@ import (
 	"net/http"
 )
 
-type TailFilter struct {
+type tail struct {
 	name string
 }
 
-var tailFilter = &TailFilter{name: "tail"}
-
-func init() {
-	RegistryFilter(tailFilter)
+func (t tail) Init() {
 }
 
-func (t TailFilter) Name() string {
+func init() {
+	RegistryFilter(&tail{name: "tail"})
+}
+
+func (t tail) Name() string {
 	return t.name
 }
 
-func (t TailFilter) Filter(chain *Chain, exchange *Exchange, config interface{}) error {
+func (t tail) Filter(exchange *Exchange, config interface{}) error {
 	exchange.Completed = true
 	writeSelf(exchange.Resp, exchange.Req)
 	return nil

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Addr      string `yaml:"addr"`
 	Ssl       *Ssl
+	Passwords []string
 	Routes    []Route
 	Instances []Instance
 }
