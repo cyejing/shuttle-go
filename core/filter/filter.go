@@ -2,7 +2,7 @@ package filter
 
 import (
 	"context"
-	"github.com/cyejing/shuttle/pkg/config"
+	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/log"
 	"github.com/goinggo/mapstructure"
 	"net/http"

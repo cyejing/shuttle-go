@@ -1,4 +1,4 @@
-package config
+package server
 
 import (
 	"github.com/cyejing/shuttle/pkg/log"

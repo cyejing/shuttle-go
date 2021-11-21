@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/cyejing/shuttle/core/filter"
 	"github.com/cyejing/shuttle/pkg/common"
-	"github.com/cyejing/shuttle/pkg/config"
+	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/log"
 	"net"
 	"net/http"

@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/common"
-	"github.com/cyejing/shuttle/pkg/config"
+	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/log"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
+	"os"
 )
 
 type socks struct {
@@ -54,18 +55,23 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 	}
 	if passwords[string(peek)] != nil {
 		socks := new(codec.Socks)
-		socks.Decode(bufBody)
+		socks.Decode(&logReader{
+			name: "Body",
+			r:    bufBody,
+		})
 		if inbound, ok := exchange.Req.Context().Value(common.ConnContextKey).(net.Conn); ok {
 			outbound, err := net.Dial("tcp", socks.Metadata.Address.String())
 			if err != nil {
 				log.Error("socks dial addr err %v %v", socks.Metadata.Address.String(), err)
 				return nil
 			}
+			defer outbound.Close()
 
+			lr := &logReader{name: "inbound", r: inbound, w: inbound}
 			// Start proxying
 			errCh := make(chan error, 2)
-			go connProxy(outbound, inbound, errCh)
-			go connProxy(inbound, outbound, errCh)
+			go connProxy(outbound, lr, errCh)
+			go connProxy(lr, outbound, errCh)
 			// Wait
 			for i := 0; i < 2; i++ {
 				e := <-errCh
@@ -89,6 +95,26 @@ func PeekTrojanProto(b []byte) bool {
 
 type closeWriter interface {
 	CloseWrite() error
+}
+
+type logReader struct {
+	name string
+	r    io.Reader
+	w    io.Writer
+}
+
+func (l *logReader) Write(p []byte) (n int, err error) {
+	var f, _ = os.OpenFile("Write-"+l.name+".file", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f.Write(p)
+	defer f.Close()
+	return l.w.Write(p)
+}
+
+func (l *logReader) Read(p []byte) (n int, err error) {
+	var f, _ = os.OpenFile("Reads-"+l.name+".file", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	f.Write(p)
+	defer f.Close()
+	return l.r.Read(p)
 }
 
 func connProxy(dst io.Writer, src io.Reader, errCh chan error) {

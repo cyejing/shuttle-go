@@ -68,6 +68,6 @@ func (r resource) Filter(exchange *Exchange, c interface{}) error {
 	if err != nil {
 		return err
 	}
-
+	defer file.Close()
 	return nil
 }

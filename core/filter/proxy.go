@@ -54,6 +54,7 @@ func (p proxy) Filter(exchange *Exchange, c interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
 
 	return nil
 }

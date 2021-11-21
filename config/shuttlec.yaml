@@ -1,0 +1,4 @@
+runType: socks
+localAddr: 127.0.0.1:1220
+remoteAddr: 127.0.0.1:4842
+password: cyejing123
