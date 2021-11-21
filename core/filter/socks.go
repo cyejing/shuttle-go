@@ -61,16 +61,18 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 				log.Error("socks dial addr err %v %v", socks.Metadata.Address.String(), err)
 				return nil
 			}
-			go func() {
-				_, err := io.Copy(outbound, inbound)
-				if err != nil {
-					log.Error("socks conn copy err", err)
+
+			// Start proxying
+			errCh := make(chan error, 2)
+			go connProxy(outbound, inbound, errCh)
+			go connProxy(inbound, outbound, errCh)
+			// Wait
+			for i := 0; i < 2; i++ {
+				e := <-errCh
+				if e != nil {
+					// return from this function closes target (and conn).
+					return e
 				}
-			}()
-			_, err = io.Copy(inbound, outbound)
-			if err != nil {
-				log.Error("socks conn copy err", err)
-				return nil
 			}
 		}
 	} else {
@@ -83,4 +85,16 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 func PeekTrojanProto(b []byte) bool {
 	hash := string(b)
 	return passwords[hash] != nil
+}
+
+type closeWriter interface {
+	CloseWrite() error
+}
+
+func connProxy(dst io.Writer, src io.Reader, errCh chan error) {
+	_, err := io.Copy(dst, src)
+	if tcpConn, ok := dst.(closeWriter); ok {
+		tcpConn.CloseWrite()
+	}
+	errCh <- err
 }
