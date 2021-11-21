@@ -47,8 +47,6 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 	//exchange.Req.Body.Close()
 	exchange.Req.Body = io.NopCloser(bufBody)
 
-	exchange.Req.URL.Path = "/config/index.html"
-
 	peek, err := bufBody.Peek(56)
 	if err != nil {
 		log.Error("socks peek err", err)

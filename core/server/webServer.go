@@ -71,7 +71,7 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	route, err := matchRoute(r.Routes, req)
 	if err != nil {
 		//TODO
-		log.Trace("Route not match")
+		log.Trace(err)
 		return
 	}
 	if route.Loggable {

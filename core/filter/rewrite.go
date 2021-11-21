@@ -40,7 +40,7 @@ func (r rewrite) Filter(exchange *Exchange, c interface{}) error {
 	exchange.Req.RequestURI = newPath
 	exchange.Req.URL.Path = newPath
 
-	log.Debug("rewrite path. oldPath:%v newPtah:%v", oldPath, newPath)
+	log.Debugf("rewrite path. oldPath:%v newPtah:%v", oldPath, newPath)
 
 	return nil
 }

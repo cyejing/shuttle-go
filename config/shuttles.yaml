@@ -5,7 +5,7 @@ ssl:
 passwords:
   - cyejing123
 routes:
-  - id: 196105db9a384d7a93f8102ae46684cb
+  - id: na0mdwfr0lfuv4rubvt4gsg805uofhhk
     order: 100
     host: localhost1:4842
     filters:
@@ -23,7 +23,7 @@ routes:
       - name: resource
         params:
           root: ""
-  - id: asdas
+  - id: gixxjmbjyjpfdzoe9u1z7jblxiea6czf
     order: 200
     host: localhost:4842
     filters:
