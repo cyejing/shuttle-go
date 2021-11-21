@@ -104,6 +104,7 @@ func (s *Socks5) DialRemote(network, addr string) (net.Conn, error) {
 	buf.Write(crlf)
 	buf.Write(encode)
 	buf.Write(crlf)
+
 	buf.WriteTo(conn)
 	return conn, nil
 }

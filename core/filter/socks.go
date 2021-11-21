@@ -45,7 +45,6 @@ func (t socks) Name() string {
 
 func (t socks) Filter(exchange *Exchange, config interface{}) error {
 	bufBody := bufio.NewReader(exchange.Req.Body)
-	//exchange.Req.Body.Close()
 	exchange.Req.Body = io.NopCloser(bufBody)
 
 	peek, err := bufBody.Peek(56)
@@ -60,6 +59,9 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 			r:    bufBody,
 		})
 		if inbound, ok := exchange.Req.Context().Value(common.ConnContextKey).(net.Conn); ok {
+			bufin := bufio.NewReader(inbound)
+			bytes, _ := bufin.Peek(5)
+			log.Debugf("peek bytes %v", bytes)
 			outbound, err := net.Dial("tcp", socks.Metadata.Address.String())
 			if err != nil {
 				log.Error("socks dial addr err %v %v", socks.Metadata.Address.String(), err)
@@ -67,7 +69,7 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 			}
 			defer outbound.Close()
 
-			lr := &logReader{name: "inbound", r: inbound, w: inbound}
+			lr := &logReader{name: "inbound", r: bufin, w: inbound}
 			// Start proxying
 			errCh := make(chan error, 2)
 			go connProxy(outbound, lr, errCh)
