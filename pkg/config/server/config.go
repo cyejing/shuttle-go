@@ -77,12 +77,14 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
+			log.L.Debugf("load config %s", config)
 			break
 		}
 	default:
+		log.L.Infof("load config %s", path)
 		data, err = ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatal("load config file %s err", path, err)
+			log.L.Fatal("load config file %s err", path, err)
 		}
 	}
 	err = yaml.Unmarshal(data, globalConfig)

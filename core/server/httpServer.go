@@ -32,11 +32,11 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	route, err := matchRoute(r.Routes, req)
 	if err != nil {
 		//TODO
-		log.Trace(err)
+		log.L.Trace(err)
 		return
 	}
 	if route.Loggable {
-		log.Debugf("match route %s", route.Id)
+		log.L.Debugf("match route %s", route.Id)
 	}
 
 	filter.NewChain(resp, req, route).DoFilter()

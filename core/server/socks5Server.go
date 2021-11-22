@@ -19,13 +19,13 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Error("socks5 accept conn err", err)
+			log.L.Error("socks5 accept conn err", err)
 		}
 		go func() {
 			defer conn.Close()
 			err := s.ServeConn(conn)
 			if err != nil {
-				log.Error("handle socks5 err", err)
+				log.L.Error("handle socks5 err", err)
 				return
 			}
 		}()
@@ -33,7 +33,7 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 }
 
 func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
-	log.Debugf("accept socks5 conn %v", conn)
+	log.L.Debugf("accept socks5 conn %v", conn)
 
 	config := client.GetConfig()
 
@@ -50,7 +50,7 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	outbound, err := net.Dial("tcp", config.RemoteAddr)
 	if err != nil {
-		log.Errorf("socks5 dial remote fail %v", err)
+		log.L.Errorf("socks5 dial remote fail %v", err)
 		return err
 	}
 	defer outbound.Close()

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/cyejing/shuttle/pkg/log"
 	"net/http"
 )
 
@@ -23,7 +23,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Host = %q\n", r.Host)
 	fmt.Fprintf(w, "RemoteAddr = %q\n", r.RemoteAddr)
 	if err := r.ParseForm(); err != nil {
-		log.Print(err)
+		log.L.Error(err)
 	}
 	for k, v := range r.Form {
 		fmt.Fprintf(w, "Form[%q] = %q\n", k, v)

@@ -87,9 +87,9 @@ func (c *Chain) DoFilter() {
 
 func complete(exchange *Exchange) {
 	if exchange.Err != nil {
-		log.Error(exchange.Err)
+		log.L.Error(exchange.Err)
 	}
-	log.Debug("complete")
+	log.L.Debug("complete")
 }
 
 func mapstruct(c interface{}, config interface{}) error {

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/cyejing/shuttle/core/server"
 	config "github.com/cyejing/shuttle/pkg/config/server"
-	"github.com/cyejing/shuttle/pkg/log"
 )
 
 var (
@@ -17,7 +16,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Debugf("load config %v", config.GetConfig())
 
 	srv := &server.TLSServer{
 		Addr:    c.Addr,

@@ -36,7 +36,7 @@ func (s *TLSServer) ListenAndServeTLS() error {
 
 	ln, err := net.Listen("tcp", s.Addr)
 	if err != nil {
-		log.Panic("start TLSServer fail", err)
+		log.L.Panic("start TLSServer fail", err)
 	}
 	defer ln.Close()
 
@@ -53,11 +53,11 @@ func (s *TLSServer) ListenAndServeTLS() error {
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Errorf("http: Accept error: %v; retrying in %v", err, tempDelay)
+				log.L.Errorf("http: Accept error: %v; retrying in %v", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
 			} else {
-				log.Error("accept tls conn fail", err)
+				log.L.Error("accept tls conn fail", err)
 			}
 		}
 		c := &conn{
@@ -69,7 +69,7 @@ func (s *TLSServer) ListenAndServeTLS() error {
 			err := c.handle()
 			if err != nil {
 				if err != io.EOF {
-					log.Errorf("tls server handle conn fail %v", err)
+					log.L.Errorf("tls server handle conn fail %v", err)
 				}
 				return
 			}
@@ -136,7 +136,6 @@ func (r *response) WriteHeader(statusCode int) {
 }
 
 func (c *conn) handle() error {
-	log.Debugf("conn handle %v", c)
 	bufr := bufio.NewReader(c.rwc)
 
 	err := peekTrojan(bufr, c.rwc)
@@ -175,20 +174,21 @@ func peekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 		pr := &peekReader{r: bufr}
 		err := trojan.Decode(pr)
 		if err != nil {
-			log.Warnf("trojan proto decode fail %v", err)
+			log.L.Warnf("trojan proto decode fail %v", err)
 			return nil
 		} else {
+			log.L.Infof("%s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
 			_, err := bufr.Discard(pr.i)
 			if err != nil {
-				log.Warnf("Discard trojan proto fail %v", err)
+				log.L.Warnf("Discard trojan proto fail %v", err)
 				return nil
 			}
 			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
 			if err != nil {
-				log.Error("trojan dial addr err %v %v", trojan.Metadata.Address.String(), err)
+				log.L.Error("trojan dial addr err %v %v", trojan.Metadata.Address.String(), err)
 				return err
 			}
-			log.Debug("trojan dial addr %s", trojan.Metadata.Address.String())
+			log.L.Debug("trojan dial addr %s", trojan.Metadata.Address.String())
 
 			defer outbound.Close()
 			return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)

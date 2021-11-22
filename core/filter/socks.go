@@ -32,7 +32,7 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 
 	peek, err := bufBody.Peek(56)
 	if err != nil {
-		log.Error("socks peek err", err)
+		log.L.Error("socks peek err", err)
 		return nil
 	}
 	if codec.ExitHash(peek) {
@@ -41,7 +41,7 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 		if inbound, ok := exchange.Req.Context().Value(common.ConnContextKey).(net.Conn); ok {
 			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
 			if err != nil {
-				log.Error("socks dial addr err %v %v", trojan.Metadata.Address.String(), err)
+				log.L.Error("socks dial addr err %v %v", trojan.Metadata.Address.String(), err)
 				return nil
 			}
 			defer outbound.Close()
@@ -49,7 +49,7 @@ func (t socks) Filter(exchange *Exchange, config interface{}) error {
 			utils.ProxyStream(inbound, outbound)
 		}
 	} else {
-		log.Warnf("socks password auth fail")
+		log.L.Warnf("socks password auth fail")
 	}
 
 	return nil
