@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
@@ -48,18 +49,22 @@ type Filter struct {
 }
 
 type Ssl struct {
-	Enable bool
-	Addr   string
-	Cert   string
-	Key    string
+	Cert string
+	Key  string
+}
+
+type Password struct {
+	raw  string
+	hash string
 }
 
 var (
-	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "config/shuttles.yaml", "config/shuttles.yml"}
+	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
 	globalConfig      = &Config{
 		Addr: "127.0.0.1:4843",
-		Ssl:  &Ssl{Enable: true},
+		Ssl:  &Ssl{},
 	}
+	Passwords = make(map[string]*Password)
 )
 
 func Load(path string) (config *Config, err error) {
@@ -81,9 +86,20 @@ func Load(path string) (config *Config, err error) {
 		}
 	}
 	err = yaml.Unmarshal(data, globalConfig)
+	initPasswords()
 	return globalConfig, err
 }
 
 func GetConfig() *Config {
 	return globalConfig
+}
+
+func initPasswords() {
+	for _, raw := range globalConfig.Passwords {
+		hash := utils.SHA224String(raw)
+		Passwords[hash] = &Password{
+			raw:  raw,
+			hash: hash,
+		}
+	}
 }

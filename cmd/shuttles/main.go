@@ -13,9 +13,21 @@ var (
 
 func main() {
 	flag.Parse()
-	if _, err := config.Load(*configPath); err != nil {
+	c, err := config.Load(*configPath)
+	if err != nil {
 		panic(err)
 	}
 	log.Debugf("load config %v", config.GetConfig())
-	server.StartWebServer()
+
+	srv := &server.TLSServer{
+		Addr:    c.Addr,
+		Cert:    c.Ssl.Cert,
+		Key:     c.Ssl.Key,
+		Handler: server.NewRouteMux(),
+	}
+
+	err = srv.ListenAndServeTLS()
+	if err != nil {
+		panic(err)
+	}
 }

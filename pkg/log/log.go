@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	gdebug "runtime/debug"
 )
 
 type LogLevel int
@@ -52,6 +53,7 @@ func Panicf(format string, v ...interface{}) {
 
 func Fatal(v ...interface{}) {
 	if logLevel <= FatalLevel {
+		v := append(v, "\n"+string(gdebug.Stack()))
 		logger.Fatal(fmt.Sprintln(v...))
 	}
 	os.Exit(1)
@@ -59,20 +61,23 @@ func Fatal(v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	if logLevel <= FatalLevel {
-		logger.Fatal(fmt.Sprintf(format, v...))
+		v := append(v, string(gdebug.Stack()))
+		logger.Fatal(fmt.Sprintf(format+"\n%s", v...))
 	}
 	os.Exit(1)
 }
 
 func Error(v ...interface{}) {
 	if logLevel <= ErrorLevel {
+		v := append(v, "\n"+string(gdebug.Stack()))
 		logger.Error(fmt.Sprintln(v...))
 	}
 }
 
 func Errorf(format string, v ...interface{}) {
 	if logLevel <= ErrorLevel {
-		logger.Error(fmt.Sprintf(format, v...))
+		v := append(v, string(gdebug.Stack()))
+		logger.Error(fmt.Sprintf(format+"\n%s", v...))
 	}
 }
 

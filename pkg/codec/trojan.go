@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -12,12 +13,16 @@ import (
 
 var crlf = []byte{0x0d, 0x0a}
 
-type Socks struct {
+type Trojan struct {
 	Hash     string
 	Metadata *Metadata
 }
 
-func (s *Socks) Encode() ([]byte, error) {
+func ExitHash(hash []byte) bool {
+	return server.Passwords[string(hash)] != nil
+}
+
+func (s *Trojan) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, maxPacketSize))
 	buf.Write([]byte(s.Hash))
 	buf.Write(crlf)
@@ -29,7 +34,7 @@ func (s *Socks) Encode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (s *Socks) Decode(reader io.Reader) error {
+func (s *Trojan) Decode(reader io.Reader) error {
 	hash := [56]byte{}
 	n, err := reader.Read(hash[:])
 	if err != nil || n != 56 {

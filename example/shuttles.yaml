@@ -1,13 +1,13 @@
 addr: 127.0.0.1:4842
 ssl:
-  addr: 127.0.0.1:4843
-  enable: false
+  cert: example/s.cyejing.cn_chain.crt
+  key: example/s.cyejing.cn_key.key
 passwords:
   - cyejing123
 routes:
   - id: na0mdwfr0lfuv4rubvt4gsg805uofhhk
     order: 100
-    host: localhost1:4842
+    host: localhost:4842
     loggable: true
     filters:
       - name: proxy
@@ -22,15 +22,6 @@ routes:
         params:
           regex: "/static/(.*)"
           replacement: "/$1"
-      - name: resource
-        params:
-          root: ""
-  - id: gixxjmbjyjpfdzoe9u1z7jblxiea6czf
-    order: 200
-    host: localhost:4842
-    loggable: true
-    filters:
-      - name: socks
       - name: resource
         params:
           root: ""

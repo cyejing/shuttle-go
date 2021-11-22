@@ -14,7 +14,7 @@ type Config struct {
 }
 
 var (
-	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "config/shuttlec.yaml", "config/shuttlec.yml"}
+	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "example/shuttlec.yaml", "example/shuttlec.yml"}
 	globalConfig      = &Config{
 		LocalAddr: "127.0.0.1:1220",
 	}

@@ -15,7 +15,7 @@ func TestFmt(t *testing.T) {
 
 func TestDialRemote(t *testing.T) {
 	s := &Socks5{}
-	conn, err := s.DialRemote("tcp", "127.0.0.1:4842")
+	conn, err := s.DialSendTrojan("tcp", "127.0.0.1:4842")
 	if err != nil {
 		return
 	}

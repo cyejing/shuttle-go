@@ -2,13 +2,12 @@ package codec
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
+	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/log"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
-	"strconv"
 )
 
 const (
@@ -78,16 +77,22 @@ func (s *Socks5) LSTRequest() (err error) {
 	return nil
 }
 
-func (s *Socks5) DialRemote(network, addr string) (net.Conn, error) {
+func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
 	conn, err := net.Dial(network, addr)
 	if err != nil {
 		return nil, err
 	}
-	socks := &Socks{
-		Hash: utils.SHA224String("cyejing123"),
+	c := config.GetConfig()
+
+	remoteAddr, err := NewAddressFromAddr("tcp", c.RemoteAddr)
+	if err != nil {
+		return nil, err
+	}
+	socks := &Trojan{
+		Hash: utils.SHA224String(c.Password),
 		Metadata: &Metadata{
 			Command: Connect,
-			Address: NewAddressFromHostPort("tcp", "127.0.0.1", 8088),
+			Address: remoteAddr,
 		},
 	}
 	encode, err := socks.Encode()
@@ -95,17 +100,7 @@ func (s *Socks5) DialRemote(network, addr string) (net.Conn, error) {
 		return nil, err
 	}
 
-	buf := bytes.NewBufferString("POST / HTTP/1.1")
-	buf.Write(crlf)
-	buf.WriteString("Host: localhost:4842")
-	buf.Write(crlf)
-	buf.WriteString("Content-Length: " + strconv.Itoa(len(encode)))
-	buf.Write(crlf)
-	buf.Write(crlf)
-	buf.Write(encode)
-	buf.Write(crlf)
-
-	buf.WriteTo(conn)
+	conn.Write(encode)
 	return conn, nil
 }
 

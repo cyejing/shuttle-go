@@ -2,11 +2,11 @@ package server
 
 import (
 	"bufio"
-	"crypto/tls"
-	"errors"
-	"github.com/cyejing/shuttle/core/filter"
-	config "github.com/cyejing/shuttle/pkg/config/server"
+	"bytes"
+	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/cyejing/shuttle/pkg/utils"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -19,44 +19,30 @@ const (
 	TROJAN = Protocol("trojan")
 )
 
-type conn struct {
-	rwc        net.Conn
-	remoteAddr string
-	bufr       *bufio.Reader
-	bufw       *bufio.Writer
-	handler    http.Handler
+type TLSServer struct {
+	Addr    string
+	Cert    string
+	Key     string
+	Handler http.Handler
 }
 
-type response struct {
-	c          *conn
-	proto      Protocol
-	statusCode int
-	header     http.Header
-}
+func (s *TLSServer) ListenAndServeTLS() error {
+	//cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
+	//if err != nil {
+	//	log.Panic("start TLSServer fail, check cert and key", err)
+	//}
+	//config := &tls.Config{Certificates: []tls.Certificate{cert}}
+	//ln, err := tls.Listen("tcp", s.Addr, config)
 
-func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) error {
-	c := config.GetConfig()
-	ln, err := net.Listen("tcp", addr)
+	ln, err := net.Listen("tcp", s.Addr)
 	if err != nil {
-		log.Panic("启动服务失败,端口监听异常", err)
-	}
-
-	if c.Ssl.Enable {
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			log.Panic("启动服务失败,请检查证书文件")
-		}
-		config := &tls.Config{Certificates: []tls.Certificate{cert}}
-		ln, err = tls.Listen("tcp", ":8890", config)
-		if err != nil {
-			log.Panic("启动服务失败,端口监听异常")
-		}
+		log.Panic("start TLSServer fail", err)
 	}
 	defer ln.Close()
 
-	var tempDelay time.Duration // how long to sleep on accept failure
+	var tempDelay time.Duration
 	for {
-		conn, err := ln.Accept()
+		rwc, err := ln.Accept()
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Temporary() {
 				if tempDelay == 0 {
@@ -67,85 +53,178 @@ func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) err
 				if max := 1 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
-				log.Error("http: Accept error: %v; retrying in %v", err, tempDelay)
+				log.Errorf("http: Accept error: %v; retrying in %v", err, tempDelay)
 				time.Sleep(tempDelay)
 				continue
+			} else {
+				log.Error("accept tls conn fail", err)
 			}
 		}
-		go newConn(conn, handler).handle()
+		c := &conn{
+			rwc:     rwc,
+			handler: s.Handler,
+		}
+		go func() {
+			defer c.rwc.Close()
+			err := c.handle()
+			if err != nil {
+				if err != io.EOF {
+					log.Errorf("tls server handle conn fail %v", err)
+				}
+				return
+			}
+		}()
 	}
 }
 
-func newConn(c net.Conn, h http.Handler) *conn {
-	return &conn{
-		rwc:     c,
-		handler: h,
-	}
+type conn struct {
+	rwc     net.Conn
+	handler http.Handler
+	req     *http.Request
+	resp    *http.Response
 }
 
-func (c *conn) handle() {
-	c.remoteAddr = c.rwc.RemoteAddr().String()
-	c.bufr = bufio.NewReader(c.rwc)
-	c.bufw = bufio.NewWriterSize(c.rwc, 4<<10)
+type peekReader struct {
+	r *bufio.Reader
+	i int
+}
 
-	peek, err := c.bufr.Peek(56)
+func (p *peekReader) Read(b []byte) (n int, err error) {
+	peek, err := p.r.Peek(p.i + len(b))
 	if err != nil {
-		log.Error("预览前置字节出错", err)
+		return 0, err
+	}
+	ci := copy(b, peek[p.i:])
+	p.i += ci
+	return ci, nil
+}
 
-	}
-	proto := HTTP
-	if filter.PeekTrojanProto(peek) {
-		proto = TROJAN
-	}
+type response struct {
+	resp    *http.Response
+	bufBody *bytes.Buffer
+}
 
-	req, err := http.ReadRequest(c.bufr)
-	if err != nil {
-		log.Error("读取http请求错误", err)
+func newResponse(req *http.Request) *response {
+	buf := bytes.NewBuffer([]byte{})
+	resp := &http.Response{
+		Body:    io.NopCloser(buf),
+		Request: req,
+		Header: http.Header{
+			"Connection": {"keep-alive"},
+		},
+		TLS: req.TLS,
 	}
-	resp := &response{
-		c:          c,
-		proto:      proto,
-		statusCode: 200,
-		header:     make(http.Header),
+	resp.ProtoMajor = req.ProtoMajor
+	resp.ProtoMinor = req.ProtoMinor
+	resp.StatusCode = 200
+	return &response{
+		resp:    resp,
+		bufBody: buf,
 	}
-	c.handler.ServeHTTP(resp, req)
-
-	resp.finishRequest()
 }
 
 func (r *response) Header() http.Header {
-	return r.header
+	return r.resp.Header
 }
 
-func (r *response) Write(bytes []byte) (int, error) {
-	switch r.proto {
-	case TROJAN:
-		return r.c.bufw.Write(bytes)
-	case HTTP:
-		r.writeHeader()
-		return r.writeBody(bytes)
-	default:
-		return 0, errors.New("未知的协议")
-	}
+func (r *response) Write(bs []byte) (int, error) {
+	return r.bufBody.Write(bs)
 }
 
 func (r *response) WriteHeader(statusCode int) {
-	switch r.proto {
-	case TROJAN:
-	case HTTP:
-		r.statusCode = statusCode
+	r.resp.StatusCode = statusCode
+}
+
+func (c *conn) handle() error {
+	log.Debugf("conn handle %v", c)
+
+	err := peekTrojan(c.rwc)
+	if err != nil {
+		return err
 	}
 
+	bufr := bufio.NewReader(c.rwc)
+	req, err := http.ReadRequest(bufr)
+	if err != nil {
+		return err
+	}
+	logReqDump(req)
+
+	resp := newResponse(req)
+
+	c.req = req
+	c.resp = resp.resp
+
+	c.handler.ServeHTTP(resp, req)
+
+	err = c.finishRequest()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (r *response) writeHeader() {
+func peekTrojan(conn net.Conn) error {
+	bufr := bufio.NewReader(conn)
+	peek, err := bufr.Peek(56)
+	if err != nil {
+		return err
+	}
+	if codec.ExitHash(peek) {
+		trojan := codec.Trojan{}
+		pr := &peekReader{r: bufr}
+		err := trojan.Decode(pr)
+		if err != nil {
+			log.Warnf("trojan proto decode fail %v", err)
+			return nil
+		} else {
+			_, err := bufr.Discard(pr.i)
+			if err != nil {
+				log.Warnf("Discard trojan proto fail %v", err)
+				return nil
+			}
+			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
+			if err != nil {
+				log.Error("trojan dial addr err %v %v", trojan.Metadata.Address.String(), err)
+				return err
+			}
+			log.Debug("trojan dial addr %s", trojan.Metadata.Address.String())
 
+			defer outbound.Close()
+			return utils.ProxyStream(conn, outbound)
+		}
+	}
+	return nil
 }
 
-func (r *response) writeBody(bytes []byte) (int, error) {
-	return 0, nil
-}
+func (c *conn) finishRequest() error {
+	body, err := io.ReadAll(c.resp.Body)
+	if err != nil {
+		return err
+	}
 
-func (r *response) finishRequest() {
-	r.c.bufw.Flush()
+	c.resp.ContentLength = int64(len(body))
+	c.resp.Body = io.NopCloser(bytes.NewReader(body))
+
+	if c.resp.Header.Get("Content-Type") == "" {
+		c.resp.Header.Set("Content-Type", http.DetectContentType(body))
+	}
+	c.resp.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
+	c.resp.Header.Set("Server", "nginx")
+
+	logRespDump(c.resp)
+	err = c.resp.Write(c.rwc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func logReqDump(req *http.Request) {
+	//respBytes, _ := httputil.DumpRequest(req, true)
+	//log.Debugf("\n%s", hex.Dump(respBytes))
+}
+func logRespDump(resp *http.Response) {
+	//respBytes, _ := httputil.DumpResponse(resp, true)
+	//log.Debugf("\n%s", hex.Dump(respBytes))
 }

@@ -27,7 +27,8 @@ func (r resource) Name() string {
 }
 
 var indexHtml = []string{"index.html", "index.htm", "/index.html", "/index.htm"}
-var html404 = "<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr>\n</body>\n</html>"
+var html404 = "<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>nginx</center>\n</body>\n</html>"
+var html404b = []byte(html404)
 
 func (r resource) Filter(exchange *Exchange, c interface{}) error {
 	var config ResourceConfig
@@ -58,8 +59,7 @@ func (r resource) Filter(exchange *Exchange, c interface{}) error {
 	}
 	if err != nil {
 		if os.IsNotExist(err) {
-			buf404 := bytes.NewBufferString(html404)
-			_, err = io.Copy(exchange.Resp, buf404)
+			_, err = io.Copy(exchange.Resp, bytes.NewReader(html404b))
 		}
 		return err
 	}
