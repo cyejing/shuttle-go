@@ -4,6 +4,19 @@ import (
 	"io"
 )
 
+func ProxyStreamBuf(r1 io.Reader, w1 io.Writer, r2 io.Reader, w2 io.Writer) error {
+	ec := make(chan error, 2)
+	go proxyStream(w1, r2, ec)
+	go proxyStream(w2, r1, ec)
+	for i := 0; i < 2; i++ {
+		e := <-ec
+		if e != nil {
+			// return from this function closes target (and conn).
+			return e
+		}
+	}
+	return nil
+}
 func ProxyStream(r io.ReadWriter, w io.ReadWriter) error {
 	ec := make(chan error, 2)
 	go proxyStream(r, w, ec)

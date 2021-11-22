@@ -137,13 +137,13 @@ func (r *response) WriteHeader(statusCode int) {
 
 func (c *conn) handle() error {
 	log.Debugf("conn handle %v", c)
+	bufr := bufio.NewReader(c.rwc)
 
-	err := peekTrojan(c.rwc)
+	err := peekTrojan(bufr, c.rwc)
 	if err != nil {
 		return err
 	}
 
-	bufr := bufio.NewReader(c.rwc)
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
 		return err
@@ -165,8 +165,7 @@ func (c *conn) handle() error {
 	return nil
 }
 
-func peekTrojan(conn net.Conn) error {
-	bufr := bufio.NewReader(conn)
+func peekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 	peek, err := bufr.Peek(56)
 	if err != nil {
 		return err
@@ -192,7 +191,7 @@ func peekTrojan(conn net.Conn) error {
 			log.Debug("trojan dial addr %s", trojan.Metadata.Address.String())
 
 			defer outbound.Close()
-			return utils.ProxyStream(conn, outbound)
+			return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
 		}
 	}
 	return nil
