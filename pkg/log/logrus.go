@@ -25,12 +25,12 @@ func init() {
 	L.SetReportCaller(true)
 	L.SetFormatter(&nested.Formatter{
 		TimestampFormat: time.RFC3339,
-		HideKeys:        true,
 		CustomCallerFormatter: func(frame *runtime.Frame) string {
-			return fmt.Sprintf(" %s:%d", frame.File, frame.Line)
+			funs := strings.Split(frame.Function, "/")
+			return fmt.Sprintf(" [ %s:%d %s ]", frame.File, frame.Line, funs[len(funs)-1])
 		},
 	})
-	L.AddHook(&logrusLogger{})
+	//L.AddHook(&logrusLogger{})
 }
 
 type logrusLogger struct {
