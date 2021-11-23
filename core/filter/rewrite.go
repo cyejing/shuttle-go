@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"github.com/cyejing/shuttle/pkg/log"
 	"regexp"
 )
 
@@ -40,7 +39,7 @@ func (r rewrite) Filter(exchange *Exchange, c interface{}) error {
 	exchange.Req.RequestURI = newPath
 	exchange.Req.URL.Path = newPath
 
-	log.L.Debugf("rewrite path. oldPath:%v newPtah:%v", oldPath, newPath)
+	log.Debugf("rewrite path. oldPath:%v newPtah:%v", oldPath, newPath)
 
 	return nil
 }

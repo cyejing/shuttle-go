@@ -1,6 +1,11 @@
 package codec
 
-import "io"
+import (
+	"github.com/cyejing/shuttle/pkg/logger"
+	"io"
+)
+
+var log = logger.NewLog()
 
 const (
 	maxPacketSize = 1024 * 8

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	config "github.com/cyejing/shuttle/pkg/config/client"
-	"github.com/cyejing/shuttle/pkg/log"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -24,13 +23,13 @@ func (s *Socks5) HandleHandshake() error {
 	bufConn := bufio.NewReader(s.Conn)
 	version := []byte{0}
 	if _, err := bufConn.Read(version); err != nil {
-		log.L.Errorf("[ERR] socks: Failed to get version byte: %v", err)
+		log.Errorf("[ERR] socks: Failed to get version byte: %v", err)
 		return err
 	}
 	// Ensure we are compatible
 	if version[0] != socks5Version {
 		err := fmt.Errorf("Unsupported SOCKS version: %v", version)
-		log.L.Errorf("[ERR] socks: %v", err)
+		log.Errorf("[ERR] socks: %v", err)
 		return err
 	}
 	header := []byte{0}

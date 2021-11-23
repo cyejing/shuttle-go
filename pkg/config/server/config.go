@@ -1,11 +1,13 @@
 package server
 
 import (
-	"github.com/cyejing/shuttle/pkg/log"
+	logger "github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
+
+var log = logger.NewLog()
 
 type Config struct {
 	Addr      string `yaml:"addr"`
@@ -54,8 +56,8 @@ type Ssl struct {
 }
 
 type Password struct {
-	raw  string
-	hash string
+	Raw  string
+	Hash string
 }
 
 var (
@@ -77,14 +79,14 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
-			log.L.Debugf("load config %s", config)
+			log.Debugf("load config %s", config)
 			break
 		}
 	default:
-		log.L.Infof("load config %s", path)
+		log.Infof("load config %s", path)
 		data, err = ioutil.ReadFile(path)
 		if err != nil {
-			log.L.Fatal("load config file %s err", path, err)
+			log.Fatal("load config file %s err", path, err)
 		}
 	}
 	err = yaml.Unmarshal(data, globalConfig)
@@ -100,8 +102,8 @@ func initPasswords() {
 	for _, raw := range globalConfig.Passwords {
 		hash := utils.SHA224String(raw)
 		Passwords[hash] = &Password{
-			raw:  raw,
-			hash: hash,
+			Raw:  raw,
+			Hash: hash,
 		}
 	}
 }

@@ -3,11 +3,13 @@ package filter
 import (
 	"context"
 	config "github.com/cyejing/shuttle/pkg/config/server"
-	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/goinggo/mapstructure"
 	"net/http"
 	"sync"
 )
+
+var log = logger.NewLog()
 
 type Filter interface {
 	Init()
@@ -87,9 +89,9 @@ func (c *Chain) DoFilter() {
 
 func complete(exchange *Exchange) {
 	if exchange.Err != nil {
-		log.L.Error(exchange.Err)
+		log.Error(exchange.Err)
 	}
-	log.L.Debug("complete")
+	log.Debug("complete")
 }
 
 func mapstruct(c interface{}, config interface{}) error {

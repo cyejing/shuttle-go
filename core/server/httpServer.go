@@ -4,11 +4,13 @@ import (
 	"errors"
 	"github.com/cyejing/shuttle/core/filter"
 	config "github.com/cyejing/shuttle/pkg/config/server"
-	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/cyejing/shuttle/pkg/logger"
 	"net/http"
 	"sort"
 	"strings"
 )
+
+var log = logger.NewLog()
 
 type RouteMux struct {
 	Routes []config.Route
@@ -32,11 +34,11 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	route, err := matchRoute(r.Routes, req)
 	if err != nil {
 		//TODO
-		log.L.Trace(err)
+		log.Trace(err)
 		return
 	}
 	if route.Loggable {
-		log.L.Debugf("match route %s", route.Id)
+		log.Debugf("match route %s", route.Id)
 	}
 
 	filter.NewChain(resp, req, route).DoFilter()

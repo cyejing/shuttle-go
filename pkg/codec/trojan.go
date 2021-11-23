@@ -18,8 +18,9 @@ type Trojan struct {
 	Metadata *Metadata
 }
 
-func ExitHash(hash []byte) bool {
-	return server.Passwords[string(hash)] != nil
+func ExitHash(hash []byte) (*server.Password, bool) {
+	pw := server.Passwords[string(hash)]
+	return pw, pw != nil
 }
 
 func (s *Trojan) Encode() ([]byte, error) {

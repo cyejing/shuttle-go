@@ -1,10 +1,12 @@
 package client
 
 import (
-	"github.com/cyejing/shuttle/pkg/log"
+	"github.com/cyejing/shuttle/pkg/logger"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
+
+var log = logger.NewLog()
 
 type Config struct {
 	RunType    string `yaml:"runType"`
@@ -35,7 +37,7 @@ func Load(path string) (config *Config, err error) {
 	default:
 		data, err = ioutil.ReadFile(path)
 		if err != nil {
-			log.L.Fatal("load config file %s err", path, err)
+			log.Fatalf("load config file %s err %v", path, err)
 		}
 	}
 	err = yaml.Unmarshal(data, globalConfig)

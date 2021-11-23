@@ -1,4 +1,4 @@
-addr: 127.0.0.1:4842
+addr: 127.0.0.1:4843
 ssl:
   cert: example/s.cyejing.cn_chain.crt
   key: example/s.cyejing.cn_key.key
