@@ -1,13 +1,13 @@
-addr: 127.0.0.1:4843
-ssl:
-  cert: example/s.cyejing.cn_chain.crt
-  key: example/s.cyejing.cn_key.key
+addr: 127.0.0.1:4880
+sslAddr: 127.0.0.1:4843
+cert: example/s.cyejing.cn_chain.crt
+key: example/s.cyejing.cn_key.key
 passwords:
   - cyejing123
 routes:
   - id: na0mdwfr0lfuv4rubvt4gsg805uofhhk
     order: 100
-    host: s.cyejing.cn:4842
+    host: .*
     loggable: true
     filters:
       - name: resource

@@ -6,8 +6,8 @@ import (
 	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"net/http"
+	"regexp"
 	"sort"
-	"strings"
 )
 
 var log = logger.NewLog()
@@ -46,10 +46,10 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 func matchRoute(routes []config.Route, req *http.Request) (route config.Route, err error) { //copy Route
 	for _, route := range routes {
-		if route.Host == req.Host {
+		if ok, _ := regexp.MatchString(route.Host, req.Host); route.Host != "" && ok {
 			return route, nil
 		}
-		if route.Path != "" && strings.Index(req.URL.Path, route.Path) == 0 {
+		if ok, _ := regexp.MatchString(route.Path, req.URL.Path); route.Path != "" && ok {
 			return route, nil
 		}
 	}

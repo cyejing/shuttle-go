@@ -1,9 +1,12 @@
 package codec
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
+	"github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -57,6 +60,81 @@ func (s *Trojan) Decode(reader io.Reader) error {
 		return err
 	}
 	return nil
+}
+
+func DialTrojan(metadata *Metadata) (net.Conn, error) {
+	config := client.GetConfig()
+	outbound, err := tls.Dial("tcp", config.RemoteAddr, &tls.Config{
+		InsecureSkipVerify: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	socks := &Trojan{
+		Hash: utils.SHA224String(config.Password),
+		Metadata: &Metadata{
+			Command: Connect,
+			Address: metadata.Address,
+		},
+	}
+	encode, err := socks.Encode()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = outbound.Write(encode)
+	if err != nil {
+		return nil, err
+	}
+	return outbound, err
+}
+
+func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
+	peek, err := bufr.Peek(56)
+	if err != nil {
+		return err
+	}
+	if pw, ok := ExitHash(peek); ok {
+		log.Infof("%s authenticated as %s", conn.RemoteAddr(), pw.Raw)
+		trojan := Trojan{}
+		pr := &peekReader{r: bufr}
+		err := trojan.Decode(pr)
+		if err != nil {
+			log.Warnf("trojan proto decode fail %v", err)
+			return nil
+		} else {
+			_, err := bufr.Discard(pr.i)
+			if err != nil {
+				log.Warnf("Discard trojan proto fail %v", err)
+				return nil
+			}
+			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
+			if err != nil {
+				return utils.NewError(fmt.Sprintf("trojan dial addr fail %v", trojan.Metadata.Address.String())).Base(err)
+			}
+			log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
+
+			defer outbound.Close()
+			return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
+		}
+	}
+	return nil
+}
+
+type peekReader struct {
+	r *bufio.Reader
+	i int
+}
+
+func (p *peekReader) Read(b []byte) (n int, err error) {
+	peek, err := p.r.Peek(p.i + len(b))
+	if err != nil {
+		return 0, err
+	}
+	ci := copy(b, peek[p.i:])
+	p.i += ci
+	return ci, nil
 }
 
 type Command byte

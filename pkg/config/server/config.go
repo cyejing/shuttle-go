@@ -11,7 +11,9 @@ var log = logger.NewLog()
 
 type Config struct {
 	Addr      string `yaml:"addr"`
-	Ssl       *Ssl
+	SslAddr   string `yaml:"sslAddr"`
+	Cert      string
+	Key       string
 	Passwords []string
 	Routes    []Route
 	Instances []Instance
@@ -50,11 +52,6 @@ type Filter struct {
 	Loggable bool
 }
 
-type Ssl struct {
-	Cert string
-	Key  string
-}
-
 type Password struct {
 	Raw  string
 	Hash string
@@ -62,9 +59,9 @@ type Password struct {
 
 var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
-	globalConfig      = &Config{
-		Addr: "127.0.0.1:4843",
-		Ssl:  &Ssl{},
+	GlobalConfig      = &Config{
+		Addr:    "127.0.0.1:4880",
+		SslAddr: "127.0.0.1:4843",
 	}
 	Passwords = make(map[string]*Password)
 )
@@ -79,7 +76,7 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
-			log.Debugf("load config %s", config)
+			log.Infof("load config %s", config)
 			break
 		}
 	default:
@@ -89,17 +86,17 @@ func Load(path string) (config *Config, err error) {
 			log.Fatal("load config file %s err", path, err)
 		}
 	}
-	err = yaml.Unmarshal(data, globalConfig)
+	err = yaml.Unmarshal(data, GlobalConfig)
 	initPasswords()
-	return globalConfig, err
+	return GlobalConfig, err
 }
 
 func GetConfig() *Config {
-	return globalConfig
+	return GlobalConfig
 }
 
 func initPasswords() {
-	for _, raw := range globalConfig.Passwords {
+	for _, raw := range GlobalConfig.Passwords {
 		hash := utils.SHA224String(raw)
 		Passwords[hash] = &Password{
 			Raw:  raw,

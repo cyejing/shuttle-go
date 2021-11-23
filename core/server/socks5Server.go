@@ -1,15 +1,14 @@
 package server
 
 import (
-	"crypto/tls"
 	"fmt"
 	"github.com/cyejing/shuttle/pkg/codec"
-	"github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
 
 type Socks5Server struct {
+	DialFunc func(metadata *codec.Metadata) (net.Conn, error)
 }
 
 func (s *Socks5Server) ListenAndServe(network, addr string) error {
@@ -35,7 +34,6 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 }
 
 func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
-	config := client.GetConfig()
 	socks5 := codec.Socks5{Conn: conn}
 
 	err = socks5.HandleHandshake()
@@ -47,11 +45,9 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 		return utils.NewError("socks5 LSTRequest fail").Base(err)
 	}
 
-	outbound, err := tls.Dial("tcp", config.RemoteAddr, &tls.Config{
-		InsecureSkipVerify: true,
-	})
+	outbound, err := s.DialFunc(socks5.Metadata)
 	if err != nil {
-		return utils.NewError(fmt.Sprintf("socks5 dial remote fail %v", config.RemoteAddr)).Base(err)
+		return utils.NewError(fmt.Sprintf("socks5 dial remote fail %v", outbound.RemoteAddr())).Base(err)
 	}
 	defer outbound.Close()
 
@@ -61,32 +57,6 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 	if err != nil {
 		return utils.NewError("socks5 sendReply fail").Base(err)
 	}
-	err = sendTrojan(outbound, socks5.Metadata.Address)
-	if err != nil {
-		return utils.NewError("socks5 sendTrojan fail").Base(err)
-	}
 
 	return utils.ProxyStream(conn, outbound)
-}
-
-func sendTrojan(outbound net.Conn, address *codec.Address) error {
-	c := client.GetConfig()
-
-	socks := &codec.Trojan{
-		Hash: utils.SHA224String(c.Password),
-		Metadata: &codec.Metadata{
-			Command: codec.Connect,
-			Address: address,
-		},
-	}
-	encode, err := socks.Encode()
-	if err != nil {
-		return err
-	}
-
-	_, err = outbound.Write(encode)
-	if err != nil {
-		return err
-	}
-	return nil
 }

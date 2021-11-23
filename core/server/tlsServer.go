@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/hex"
-	"fmt"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -24,25 +23,9 @@ const (
 )
 
 type TLSServer struct {
-	Addr    string
 	Cert    string
 	Key     string
 	Handler http.Handler
-}
-
-type peekReader struct {
-	r *bufio.Reader
-	i int
-}
-
-func (p *peekReader) Read(b []byte) (n int, err error) {
-	peek, err := p.r.Peek(p.i + len(b))
-	if err != nil {
-		return 0, err
-	}
-	ci := copy(b, peek[p.i:])
-	p.i += ci
-	return ci, nil
 }
 
 type response struct {
@@ -62,20 +45,32 @@ func (r *response) WriteHeader(statusCode int) {
 	r.resp.StatusCode = statusCode
 }
 
-func (s *TLSServer) ListenAndServeTLS() error {
+func (s *TLSServer) ListenAndServeTLS(addr string) error {
 	cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
 	if err != nil {
 		return utils.NewError("start TLSServer fail, check cert and key").Base(err)
 	}
 	config := &tls.Config{Certificates: []tls.Certificate{cert}}
-	ln, err := tls.Listen("tcp", s.Addr, config)
-	//ln, err := net.Listen("tcp", s.Addr)
+	ln, err := tls.Listen("tcp", addr, config)
 	if err != nil {
 		return utils.NewError("start TLSServer fail").Base(err)
 	}
 	defer ln.Close()
-	log.Infof("server listen at %s", s.Addr)
 
+	return s.Server(ln)
+}
+func (s *TLSServer) ListenAndServe(addr string) error {
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return utils.NewError("start Server fail").Base(err)
+	}
+	defer ln.Close()
+
+	return s.Server(ln)
+}
+
+func (s *TLSServer) Server(ln net.Listener) error {
+	log.Infof("server listen at %s", ln.Addr())
 	var tempDelay time.Duration
 	for {
 		rwc, err := ln.Accept()
@@ -128,13 +123,14 @@ func (c *conn) handle() error {
 		return err
 	}
 
-	err = peekTrojan(bufr, c.rwc)
+	err = codec.PeekTrojan(bufr, c.rwc)
 	if err != nil {
 		return err
 	}
 
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
+		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
 		return err
 	}
 	resp := newResponse(req)
@@ -156,9 +152,6 @@ func (c *conn) handshakeCheck() error {
 	ctx := context.Background()
 	if tlsConn, ok := c.rwc.(*tls.Conn); ok {
 		if err := tlsConn.HandshakeContext(ctx); err != nil {
-			// If the handshake failed due to the client not speaking
-			// TLS, assume they're speaking plaintext HTTP and write a
-			// 400 response on the TLS conn's underlying net.Conn.
 			if re, ok := err.(tls.RecordHeaderError); ok && re.Conn != nil && tlsRecordHeaderLooksLikeHTTP(re.RecordHeader) {
 				io.WriteString(re.Conn, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
 				re.Conn.Close()
@@ -217,38 +210,6 @@ func newResponse(req *http.Request) *response {
 		resp:    resp,
 		bufBody: buf,
 	}
-}
-
-func peekTrojan(bufr *bufio.Reader, conn net.Conn) error {
-	peek, err := bufr.Peek(56)
-	if err != nil {
-		return err
-	}
-	if pw, ok := codec.ExitHash(peek); ok {
-		log.Infof("%s authenticated as %s", conn.RemoteAddr(), pw.Raw)
-		trojan := codec.Trojan{}
-		pr := &peekReader{r: bufr}
-		err := trojan.Decode(pr)
-		if err != nil {
-			log.Warnf("trojan proto decode fail %v", err)
-			return nil
-		} else {
-			_, err := bufr.Discard(pr.i)
-			if err != nil {
-				log.Warnf("Discard trojan proto fail %v", err)
-				return nil
-			}
-			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
-			if err != nil {
-				return utils.NewError(fmt.Sprintf("trojan dial addr fail %v", trojan.Metadata.Address.String())).Base(err)
-			}
-			log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
-
-			defer outbound.Close()
-			return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
-		}
-	}
-	return nil
 }
 
 func logReqDump(req *http.Request) {

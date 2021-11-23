@@ -1,35 +1,45 @@
 package server
 
 import (
-	"bufio"
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"github.com/cyejing/shuttle/pkg/codec"
+	config "github.com/cyejing/shuttle/pkg/config/client"
+	"io"
 	"mime"
 	"net/http"
 	"os"
 	"testing"
 )
 
-func TestPeekReader(t *testing.T) {
-	r := bytes.NewBufferString("hello buffer")
-	buf := bufio.NewReader(r)
-	pr := &peekReader{r: buf}
+func TestTrojanServer(t *testing.T) {
+	config.GlobalConfig = &config.Config{
+		RemoteAddr: "s.cyejing.cn:4843",
+		Password:   "123",
+	}
 
-	b := make([]byte, 2)
+	addr, err := codec.NewAddressFromAddr("tcp", "localhost:8088")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	conn, err := codec.DialTrojan(&codec.Metadata{
+		Command: 0,
+		Address: addr,
+	})
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	bs, err := io.ReadAll(conn)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	fmt.Println(hex.Dump(bs))
+	fmt.Println(string(bs))
 
-	pr.Read(b)
-	fmt.Printf("%s\n", b)
-
-	pr.Read(b)
-	fmt.Printf("%s\n", b)
-
-	buf.Discard(pr.i)
-
-	buf.Read(b)
-	fmt.Printf("%s\n", b)
-
-	buf.Read(b)
-	fmt.Printf("%s\n", b)
 }
 
 func TestName(t *testing.T) {

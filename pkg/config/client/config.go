@@ -17,7 +17,7 @@ type Config struct {
 
 var (
 	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "example/shuttlec.yaml", "example/shuttlec.yml"}
-	globalConfig      = &Config{
+	GlobalConfig      = &Config{
 		LocalAddr: "127.0.0.1:1080",
 	}
 )
@@ -40,10 +40,10 @@ func Load(path string) (config *Config, err error) {
 			log.Fatalf("load config file %s err %v", path, err)
 		}
 	}
-	err = yaml.Unmarshal(data, globalConfig)
-	return globalConfig, err
+	err = yaml.Unmarshal(data, GlobalConfig)
+	return GlobalConfig, err
 }
 
 func GetConfig() *Config {
-	return globalConfig
+	return GlobalConfig
 }
