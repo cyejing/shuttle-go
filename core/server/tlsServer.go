@@ -192,7 +192,6 @@ func (c *conn) finishRequest() error {
 		c.resp.Header.Set("Content-Type", http.DetectContentType(body))
 	}
 	c.resp.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
-	c.resp.Header.Set("Server", "nginx")
 
 	err = c.resp.Write(c.rwc)
 	if err != nil {

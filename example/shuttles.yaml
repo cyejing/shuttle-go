@@ -7,24 +7,22 @@ passwords:
 routes:
   - id: na0mdwfr0lfuv4rubvt4gsg805uofhhk
     order: 100
-    host: localhost:4842
+    host: s.cyejing.cn:4842
     loggable: true
     filters:
-      - name: proxy
+      - name: resource
         params:
-          uri: "http://localhost:8088"
+          root: "./html"
   - id: f1xb758a1hsrkguxtryjjt4swakayrf8
     order: 120
-    path: /static
+    path: /proxy
     loggable: true
     filters:
       - name: rewrite
         params:
-          regex: "/static/(.*)"
+          regex: "/proxy/(.*)"
           replacement: "/$1"
-      - name: resource
+      - name: proxy
         params:
-          root: ""
-instances:
-  - group: example
-    uri: https://www.baidu.com
+          uri: "http://127.0.0.1:8088"
+
