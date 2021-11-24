@@ -1,4 +1,5 @@
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
@@ -30,6 +31,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.TAG_NAME }}
-          file: ./trojan-go-*.zip
+          file: ./shuttle-*.zip
           file_glob: true
           prerelease: true
