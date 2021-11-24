@@ -38,7 +38,7 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if route.Loggable {
-		log.Debugf("match route %s", route.Id)
+		log.Debugf("match route %s", route.ID)
 	}
 
 	filter.NewChain(resp, req, route).DoFilter()

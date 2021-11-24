@@ -11,12 +11,14 @@ import (
 
 var log = logger.NewLog()
 
+// Filter interface
 type Filter interface {
 	Init()
 	Name() string
 	Filter(exchange *Exchange, c interface{}) error
 }
 
+// Exchange struct
 type Exchange struct {
 	Resp      http.ResponseWriter
 	Req       *http.Request
@@ -32,6 +34,7 @@ func (e *Exchange) Error(err error) {
 	e.Err = err
 }
 
+// Chain struct
 type Chain struct {
 	Filters  []Filter
 	Index    int
@@ -39,12 +42,14 @@ type Chain struct {
 	Route    config.Route
 }
 
+// registry filter for chain
 var registryFilters = map[string]Filter{}
 
 func RegistryFilter(filter Filter) {
 	registryFilters[filter.Name()] = filter
 }
 
+// Init filter
 func Init() {
 	for _, filter := range registryFilters {
 		filter.Init()

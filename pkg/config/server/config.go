@@ -20,7 +20,7 @@ type Config struct {
 }
 
 type Route struct {
-	Id       string
+	ID       string `yaml:"id"`
 	Order    int
 	Host     string
 	Path     string
@@ -39,7 +39,7 @@ func (r Route) GetFilter(name string) Filter {
 
 type Instance struct {
 	Group        string
-	Url          string
+	URL          string `yaml:"url"`
 	Weight       int
 	RegisterTime int64
 	Tags         []string
@@ -57,6 +57,7 @@ type Password struct {
 	Hash string
 }
 
+// config var
 var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
 	GlobalConfig      = &Config{

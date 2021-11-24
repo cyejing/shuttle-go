@@ -187,6 +187,7 @@ func (r *Metadata) String() string {
 
 type AddressType byte
 
+// trojan AddressType
 const (
 	IPv4       AddressType = 1
 	DomainName AddressType = 3

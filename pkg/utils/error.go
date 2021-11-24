@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-type serr struct {
+type SErr struct {
 	Msg  string
 	Pc   uintptr
 	File string
 	Line int
 }
 
-func (e *serr) Error() string {
+func (e *SErr) Error() string {
 	return e.Msg + " : " + e.File + ":" + strconv.Itoa(e.Line)
 }
 
-func (e *serr) Base(err error) *serr {
-	if se, ok := err.(*serr); ok {
+func (e *SErr) Base(err error) *SErr {
+	if se, ok := err.(*SErr); ok {
 		e.Msg += " : " + se.Msg
 		e.Pc = se.Pc
 		e.File = se.File
@@ -30,11 +30,14 @@ func (e *serr) Base(err error) *serr {
 	return e
 }
 
-func NewErrf(msg string, v ...interface{}) *serr {
+// NewErrf for trace
+func NewErrf(msg string, v ...interface{}) *SErr {
 	return NewErr(fmt.Sprintf(msg, v...))
 }
-func NewErr(msg string) *serr {
-	err := &serr{
+
+// NewErr for trace
+func NewErr(msg string) *SErr {
+	err := &SErr{
 		Msg: msg,
 	}
 	for i := 0; i < 3; i++ {
@@ -48,9 +51,9 @@ func NewErr(msg string) *serr {
 
 	return err
 }
-func BaseErrf(msg string, e error, v ...interface{}) *serr {
+func BaseErrf(msg string, e error, v ...interface{}) *SErr {
 	return NewErrf(msg, v).Base(e)
 }
-func BaseErr(msg string, e error) *serr {
+func BaseErr(msg string, e error) *SErr {
 	return NewErr(msg).Base(e)
 }

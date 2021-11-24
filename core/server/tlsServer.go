@@ -17,11 +17,7 @@ import (
 
 type Protocol string
 
-const (
-	HTTP   = Protocol("http")
-	TROJAN = Protocol("trojan")
-)
-
+// TLSServer struct
 type TLSServer struct {
 	Cert    string
 	Key     string

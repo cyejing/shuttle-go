@@ -8,6 +8,7 @@ import (
 	"net"
 )
 
+// socks5 const
 const (
 	socks5Version = byte(0x05)
 	NoAuth        = byte(0x00)

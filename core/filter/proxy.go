@@ -11,7 +11,7 @@ type proxy struct {
 }
 
 type ProxyConfig struct {
-	Uri string
+	URI string `asn1:"url"`
 }
 
 var client = http.DefaultClient
@@ -33,7 +33,7 @@ func (p proxy) Filter(exchange *Exchange, c interface{}) error {
 		return err
 	}
 
-	u, err := url.Parse(config.Uri + exchange.Req.URL.Path)
+	u, err := url.Parse(config.URI + exchange.Req.URL.Path)
 	if err != nil {
 		return err
 	}
