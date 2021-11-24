@@ -1,4 +1,4 @@
-name: Test
+name: ci-test-build
 on:
   push:
     branches:
@@ -39,4 +39,4 @@ jobs:
           git diff --exit-code go.mod go.sum
           go mod verify
       - name: Test
-        run: make test
+        run: make test build
