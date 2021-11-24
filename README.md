@@ -4,7 +4,7 @@
 Shuttle是功能小巧代理网关，连通一切，互联万物。
 
 ## 使用
-下载执行文件[Release 页面](https://github.com/p4gefau1t/trojan-go/releases)
+下载执行文件[Release 页面](https://github.com/cyejing/shuttle/releases)
 ### 启动服务端
 ``./shuttles -c example/shuttles.yaml``
 
