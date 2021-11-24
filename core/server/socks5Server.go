@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
@@ -20,13 +19,13 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Error("socks5 accept conn fail |", err)
+			log.Error("socks5 accept conn fail ", err)
 		}
 		go func() {
 			defer conn.Close()
 			err := s.ServeConn(conn)
 			if err != nil {
-				log.Error("handle socks5 fail |", err)
+				log.Error("handle socks5 fail ", err)
 				return
 			}
 		}()
@@ -38,16 +37,16 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	err = socks5.HandleHandshake()
 	if err != nil {
-		return utils.NewError("socks5 HandleHandshake fail").Base(err)
+		return utils.BaseErr("socks5 HandleHandshake fail", err)
 	}
 	err = socks5.LSTRequest()
 	if err != nil {
-		return utils.NewError("socks5 LSTRequest fail").Base(err)
+		return utils.BaseErr("socks5 LSTRequest fail", err)
 	}
 
 	outbound, err := s.DialFunc(socks5.Metadata)
 	if err != nil {
-		return utils.NewError(fmt.Sprintf("socks5 dial remote fail %v", outbound.RemoteAddr())).Base(err)
+		return utils.BaseErrf("socks5 dial remote fail %v", err, outbound.RemoteAddr())
 	}
 	defer outbound.Close()
 
@@ -55,7 +54,7 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	err = socks5.SendReply(codec.SuccessReply)
 	if err != nil {
-		return utils.NewError("socks5 sendReply fail").Base(err)
+		return utils.BaseErr("socks5 sendReply fail", err)
 	}
 
 	return utils.ProxyStream(conn, outbound)

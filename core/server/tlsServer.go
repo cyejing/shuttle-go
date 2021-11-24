@@ -47,13 +47,14 @@ func (r *response) WriteHeader(statusCode int) {
 
 func (s *TLSServer) ListenAndServeTLS(addr string) error {
 	cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
+
 	if err != nil {
-		return utils.NewError("start TLSServer fail, check cert and key").Base(err)
+		return utils.BaseErr("start TLSServer fail, check cert and key", err)
 	}
 	config := &tls.Config{Certificates: []tls.Certificate{cert}}
 	ln, err := tls.Listen("tcp", addr, config)
 	if err != nil {
-		return utils.NewError("start TLSServer fail").Base(err)
+		return utils.BaseErr("start TLSServer fail", err)
 	}
 	defer ln.Close()
 
@@ -62,7 +63,7 @@ func (s *TLSServer) ListenAndServeTLS(addr string) error {
 func (s *TLSServer) ListenAndServe(addr string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return utils.NewError("start Server fail").Base(err)
+		return utils.BaseErr("start Server fail", err)
 	}
 	defer ln.Close()
 
@@ -88,7 +89,7 @@ func (s *TLSServer) Server(ln net.Listener) error {
 				time.Sleep(tempDelay)
 				continue
 			} else {
-				log.Error("accept tls conn fail |", err)
+				log.Error("accept tls conn fail", err)
 			}
 		}
 		c := &conn{
@@ -100,7 +101,7 @@ func (s *TLSServer) Server(ln net.Listener) error {
 			err := c.handle()
 			if err != nil {
 				if err != io.EOF {
-					log.Error("tls server handle conn fail |", err)
+					log.Error("tls server handle conn fail", err)
 				}
 				return
 			}
@@ -120,18 +121,18 @@ func (c *conn) handle() error {
 
 	err := c.handshakeCheck()
 	if err != nil {
-		return err
+		return utils.BaseErr("handshake check fail", err)
 	}
 
 	err = codec.PeekTrojan(bufr, c.rwc)
 	if err != nil {
-		return err
+		return utils.BaseErr("peek trojan fail", err)
 	}
 
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
 		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
-		return err
+		return utils.BaseErr("read request fail", err)
 	}
 	resp := newResponse(req)
 
@@ -142,7 +143,7 @@ func (c *conn) handle() error {
 
 	err = c.finishRequest()
 	if err != nil {
-		return err
+		return utils.BaseErr("finish request fail", err)
 	}
 
 	return nil
@@ -155,7 +156,7 @@ func (c *conn) handshakeCheck() error {
 			if re, ok := err.(tls.RecordHeaderError); ok && re.Conn != nil && tlsRecordHeaderLooksLikeHTTP(re.RecordHeader) {
 				io.WriteString(re.Conn, "HTTP/1.0 400 Bad Request\r\n\r\nClient sent an HTTP request to an HTTPS server.\n")
 				re.Conn.Close()
-				return err
+				return nil
 			}
 			log.Warnf("http: TLS handshake error from %s: %v", c.rwc.RemoteAddr(), err)
 			return err
@@ -175,7 +176,7 @@ func tlsRecordHeaderLooksLikeHTTP(hdr [5]byte) bool {
 func (c *conn) finishRequest() error {
 	body, err := io.ReadAll(c.resp.Body)
 	if err != nil {
-		return err
+		return utils.BaseErr("read body fail", err)
 	}
 
 	c.resp.ContentLength = int64(len(body))
@@ -188,7 +189,7 @@ func (c *conn) finishRequest() error {
 
 	err = c.resp.Write(c.rwc)
 	if err != nil {
-		return err
+		return utils.BaseErr("response write fail", err)
 	}
 	return nil
 }

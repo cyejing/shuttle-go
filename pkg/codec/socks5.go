@@ -2,7 +2,6 @@ package codec
 
 import (
 	"bufio"
-	"fmt"
 	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -23,25 +22,22 @@ func (s *Socks5) HandleHandshake() error {
 	bufConn := bufio.NewReader(s.Conn)
 	version := []byte{0}
 	if _, err := bufConn.Read(version); err != nil {
-		log.Errorf("[ERR] socks: Failed to get version byte: %v", err)
-		return err
+		return utils.BaseErr("Failed to get version byte", err)
 	}
 	// Ensure we are compatible
 	if version[0] != socks5Version {
-		err := fmt.Errorf("Unsupported SOCKS version: %v", version)
-		log.Errorf("[ERR] socks: %v", err)
-		return err
+		return utils.NewErrf("unsupported SOCKS version: %v", string(version))
 	}
 	header := []byte{0}
 	if _, err := bufConn.Read(header); err != nil {
-		return err
+		return utils.BaseErr("socks5 handshake fail", err)
 	}
 
 	numMethods := int(header[0])
 	methods := make([]byte, numMethods)
 	_, err := io.ReadAtLeast(bufConn, methods, numMethods)
 	if err != nil {
-		return err
+		return utils.BaseErr("socks5 handshake fail", err)
 	}
 
 	useMethod := NoAuth //默认不需要密码
@@ -56,17 +52,17 @@ func (s *Socks5) LSTRequest() (err error) {
 	// Read the version byte
 	header := []byte{0, 0, 0}
 	if _, err := io.ReadAtLeast(conn, header, 3); err != nil {
-		return fmt.Errorf("Failed to get command version: %v", err)
+		return utils.BaseErr("socks5 LSTRequest read header fail", err)
 	}
 	// Ensure we are compatible
 	if header[0] != socks5Version {
-		return fmt.Errorf("Unsupported command version: %v", header[0])
+		return utils.NewErrf("unsupported SOCKS version: %v", string(header[:1]))
 	}
 
 	address := new(Address)
 	err = address.ReadFrom(conn)
 	if err != nil {
-		return err
+		return utils.BaseErr("socks5 LSTRequest fail", err)
 	}
 
 	s.Metadata = &Metadata{
@@ -79,24 +75,24 @@ func (s *Socks5) LSTRequest() (err error) {
 func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
 	conn, err := net.Dial(network, addr)
 	if err != nil {
-		return nil, err
+		return nil, utils.BaseErrf("socks5 dial remote fai %sl", err, addr)
 	}
 	c := config.GetConfig()
 
 	remoteAddr, err := NewAddressFromAddr("tcp", c.RemoteAddr)
 	if err != nil {
-		return nil, err
+		return nil, utils.BaseErrf("socks5 send trojan fail %v", err, c.RemoteAddr)
 	}
-	socks := &Trojan{
+	trojan := &Trojan{
 		Hash: utils.SHA224String(c.Password),
 		Metadata: &Metadata{
 			Command: Connect,
 			Address: remoteAddr,
 		},
 	}
-	encode, err := socks.Encode()
+	encode, err := trojan.Encode()
 	if err != nil {
-		return nil, err
+		return nil, utils.BaseErrf("socks5 encode trojan fail %v", err, c.RemoteAddr)
 	}
 
 	conn.Write(encode)
@@ -124,7 +120,6 @@ const (
 	addrTypeNotSupported
 )
 
-// sendReply is used to send a reply message
 func (s *Socks5) SendReply(resp uint8) error {
 	// Format the address
 	addrType := ipv4Address

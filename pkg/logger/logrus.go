@@ -22,7 +22,7 @@ func init() {
 	glog = logrus.New()
 	glog.SetOutput(io.MultiWriter(os.Stdout, file))
 	glog.SetLevel(logrus.DebugLevel)
-	glog.SetReportCaller(true)
+	glog.SetReportCaller(false)
 	glog.SetFormatter(&nested.Formatter{
 		TimestampFormat: time.RFC3339,
 		CustomCallerFormatter: func(frame *runtime.Frame) string {
