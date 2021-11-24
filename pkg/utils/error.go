@@ -31,7 +31,7 @@ func (e *serr) Base(err error) *serr {
 }
 
 func NewErrf(msg string, v ...interface{}) *serr {
-	return NewErr(fmt.Sprintf(msg, v))
+	return NewErr(fmt.Sprintf(msg, v...))
 }
 func NewErr(msg string) *serr {
 	err := &serr{

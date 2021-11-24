@@ -83,7 +83,7 @@ func Load(path string) (config *Config, err error) {
 		log.Infof("load config %s", path)
 		data, err = ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatal("load config file %s err", path, err)
+			log.Fatalf("load config file %s err %v", path, err)
 		}
 	}
 	err = yaml.Unmarshal(data, GlobalConfig)
