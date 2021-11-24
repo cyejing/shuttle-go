@@ -1,6 +1,6 @@
 NAME := shuttle
 PACKAGE_NAME := github.com/cyejing/shuttle
-VERSION := `git describe --tags`
+VERSION := `git describe --dirty`
 COMMIT := `git rev-parse HEAD`
 
 PLATFORM := linux
