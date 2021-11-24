@@ -16,7 +16,7 @@ on:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
-      - ".github/workflows/test.yml"
+      - ".github/workflows/ci-test-build.yml"
 jobs:
   test:
     strategy:
