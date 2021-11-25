@@ -21,7 +21,7 @@ type Trojan struct {
 	Metadata *Metadata
 }
 
-func ExitHash(hash []byte) (*server.Password, bool) {
+func exitHash(hash []byte) (*server.Password, bool) {
 	pw := server.Passwords[string(hash)]
 	return pw, pw != nil
 }
@@ -74,8 +74,8 @@ func DialTrojan(metadata *Metadata) (net.Conn, error) {
 	socks := &Trojan{
 		Hash: utils.SHA224String(config.Password),
 		Metadata: &Metadata{
-			Command: Connect,
-			Address: metadata.Address,
+			command: connect,
+			address: metadata.address,
 		},
 	}
 	encode, err := socks.Encode()
@@ -95,7 +95,7 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 	if err != nil {
 		return utils.BaseErr("peek bytes fail", err)
 	}
-	if pw, ok := ExitHash(peek); ok {
+	if pw, ok := exitHash(peek); ok {
 		log.Infof("%s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		trojan := Trojan{}
 		pr := &peekReader{r: bufr}
@@ -109,9 +109,9 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 				log.Warnf("Discard trojan proto fail %v", err)
 				return nil
 			}
-			outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
+			outbound, err := net.Dial("tcp", trojan.Metadata.address.String())
 			if err != nil {
-				return utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.Address.String())
+				return utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
 			}
 			log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
 
@@ -137,17 +137,17 @@ func (p *peekReader) Read(b []byte) (n int, err error) {
 	return ci, nil
 }
 
-type Command byte
+type command byte
 
 const (
-	Connect   Command = 1
-	Associate Command = 3
-	Mux       Command = 0x7f
+	connect   command = 1
+	associate command = 3
+	mux       command = 0x7f
 )
 
 type Metadata struct {
-	Command
-	*Address
+	command
+	*address
 }
 
 func (r *Metadata) ReadFrom(rr io.Reader) error {
@@ -156,9 +156,9 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 	if err != nil {
 		return err
 	}
-	r.Command = Command(byteBuf[0])
-	r.Address = new(Address)
-	err = r.Address.ReadFrom(rr)
+	r.command = command(byteBuf[0])
+	r.address = new(address)
+	err = r.address.ReadFrom(rr)
 	if err != nil {
 		return utils.BaseErr("failed to marshal address", err)
 	}
@@ -167,60 +167,60 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 
 func (r *Metadata) WriteTo(w io.Writer) error {
 	buf := bytes.NewBuffer(make([]byte, 0, 64))
-	buf.WriteByte(byte(r.Command))
-	if err := r.Address.WriteTo(buf); err != nil {
+	buf.WriteByte(byte(r.command))
+	if err := r.address.WriteTo(buf); err != nil {
 		return err
 	}
 	// use tcp by default
-	r.Address.NetworkType = "tcp"
+	r.address.NetworkType = "tcp"
 	_, err := w.Write(buf.Bytes())
 	return err
 }
 
 func (r *Metadata) Network() string {
-	return r.Address.Network()
+	return r.address.Network()
 }
 
 func (r *Metadata) String() string {
-	return r.Address.String()
+	return r.address.String()
 }
 
-type AddressType byte
+type addressType byte
 
 // trojan AddressType
 const (
-	IPv4       AddressType = 1
-	DomainName AddressType = 3
-	IPv6       AddressType = 4
+	iPv4       addressType = 1
+	domainName addressType = 3
+	iPv6       addressType = 4
 )
 
-type Address struct {
+type address struct {
 	DomainName  string
 	Port        int
 	NetworkType string
 	net.IP
-	AddressType
+	addressType
 }
 
-func (a *Address) String() string {
-	switch a.AddressType {
-	case IPv4:
+func (a *address) String() string {
+	switch a.addressType {
+	case iPv4:
 		return fmt.Sprintf("%s:%d", a.IP.String(), a.Port)
-	case IPv6:
+	case iPv6:
 		return fmt.Sprintf("[%s]:%d", a.IP.String(), a.Port)
-	case DomainName:
+	case domainName:
 		return fmt.Sprintf("%s:%d", a.DomainName, a.Port)
 	default:
 		return "INVALID_ADDRESS_TYPE"
 	}
 }
 
-func (a *Address) Network() string {
+func (a *address) Network() string {
 	return a.NetworkType
 }
 
-func (a *Address) ResolveIP() (net.IP, error) {
-	if a.AddressType == IPv4 || a.AddressType == IPv6 {
+func (a *address) ResolveIP() (net.IP, error) {
+	if a.addressType == iPv4 || a.addressType == iPv6 {
 		return a.IP, nil
 	}
 	if a.IP != nil {
@@ -234,31 +234,31 @@ func (a *Address) ResolveIP() (net.IP, error) {
 	return addr.IP, nil
 }
 
-func (a *Address) ReadFrom(r io.Reader) error {
+func (a *address) ReadFrom(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
 		return utils.BaseErr("unable to read ATYP", err)
 	}
-	a.AddressType = AddressType(byteBuf[0])
-	switch a.AddressType {
-	case IPv4:
+	a.addressType = addressType(byteBuf[0])
+	switch a.addressType {
+	case iPv4:
 		var buf [6]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read IPv4", err)
+			return utils.BaseErr("failed to read iPv4", err)
 		}
 		a.IP = buf[0:4]
 		a.Port = int(binary.BigEndian.Uint16(buf[4:6]))
-	case IPv6:
+	case iPv6:
 		var buf [18]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read IPv6", err)
+			return utils.BaseErr("failed to read iPv6", err)
 		}
 		a.IP = buf[0:16]
 		a.Port = int(binary.BigEndian.Uint16(buf[16:18]))
-	case DomainName:
+	case domainName:
 		_, err := io.ReadFull(r, byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
@@ -274,35 +274,35 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		if ip := net.ParseIP(string(host)); ip != nil {
 			a.IP = ip
 			if ip.To4() != nil {
-				a.AddressType = IPv4
+				a.addressType = iPv4
 			} else {
-				a.AddressType = IPv6
+				a.addressType = iPv6
 			}
 		} else {
 			a.DomainName = string(host)
 		}
 		a.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.addressType), 10))
 	}
 	return nil
 }
 
-func (a *Address) WriteTo(w io.Writer) error {
-	_, err := w.Write([]byte{byte(a.AddressType)})
+func (a *address) WriteTo(w io.Writer) error {
+	_, err := w.Write([]byte{byte(a.addressType)})
 	if err != nil {
 		return err
 	}
-	switch a.AddressType {
-	case DomainName:
+	switch a.addressType {
+	case domainName:
 		w.Write([]byte{byte(len(a.DomainName))})
 		_, err = w.Write([]byte(a.DomainName))
-	case IPv4:
+	case iPv4:
 		_, err = w.Write(a.IP.To4())
-	case IPv6:
+	case iPv6:
 		_, err = w.Write(a.IP.To16())
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.addressType), 10))
 	}
 	if err != nil {
 		return err
@@ -313,7 +313,7 @@ func (a *Address) WriteTo(w io.Writer) error {
 	return err
 }
 
-func NewAddressFromAddr(network string, addr string) (*Address, error) {
+func newAddressFromAddr(network string, addr string) (*address, error) {
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
@@ -322,30 +322,30 @@ func NewAddressFromAddr(network string, addr string) (*Address, error) {
 	if err != nil {
 		panic(err)
 	}
-	return NewAddressFromHostPort(network, host, int(port)), nil
+	return newAddressFromHostPort(network, host, int(port)), nil
 }
 
-func NewAddressFromHostPort(network string, host string, port int) *Address {
+func newAddressFromHostPort(network string, host string, port int) *address {
 	if ip := net.ParseIP(host); ip != nil {
 		if ip.To4() != nil {
-			return &Address{
+			return &address{
 				IP:          ip,
 				Port:        port,
-				AddressType: IPv4,
+				addressType: iPv4,
 				NetworkType: network,
 			}
 		}
-		return &Address{
+		return &address{
 			IP:          ip,
 			Port:        port,
-			AddressType: IPv6,
+			addressType: iPv6,
 			NetworkType: network,
 		}
 	}
-	return &Address{
+	return &address{
 		DomainName:  host,
 		Port:        port,
-		AddressType: DomainName,
+		addressType: domainName,
 		NetworkType: network,
 	}
 }

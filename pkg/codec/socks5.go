@@ -11,7 +11,7 @@ import (
 // socks5 const
 const (
 	socks5Version = byte(0x05)
-	NoAuth        = byte(0x00)
+	noAuth        = byte(0x00)
 )
 
 type Socks5 struct {
@@ -41,7 +41,7 @@ func (s *Socks5) HandleHandshake() error {
 		return utils.BaseErr("socks5 handshake fail", err)
 	}
 
-	useMethod := NoAuth //默认不需要密码
+	useMethod := noAuth //默认不需要密码
 
 	resp := []byte{socks5Version, useMethod}
 	s.Conn.Write(resp)
@@ -60,15 +60,15 @@ func (s *Socks5) LSTRequest() (err error) {
 		return utils.NewErrf("unsupported SOCKS version: %v", string(header[:1]))
 	}
 
-	address := new(Address)
+	address := new(address)
 	err = address.ReadFrom(conn)
 	if err != nil {
 		return utils.BaseErr("socks5 LSTRequest fail", err)
 	}
 
 	s.Metadata = &Metadata{
-		Command: Command(header[1]),
-		Address: address,
+		command: command(header[1]),
+		address: address,
 	}
 	return nil
 }
@@ -80,15 +80,15 @@ func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
 	}
 	c := config.GetConfig()
 
-	remoteAddr, err := NewAddressFromAddr("tcp", c.RemoteAddr)
+	remoteAddr, err := newAddressFromAddr("tcp", c.RemoteAddr)
 	if err != nil {
 		return nil, utils.BaseErrf("socks5 send trojan fail %v", err, c.RemoteAddr)
 	}
 	trojan := &Trojan{
 		Hash: utils.SHA224String(c.Password),
 		Metadata: &Metadata{
-			Command: Connect,
-			Address: remoteAddr,
+			command: connect,
+			address: remoteAddr,
 		},
 	}
 	encode, err := trojan.Encode()
@@ -101,9 +101,9 @@ func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
 }
 
 const (
-	ConnectCommand   = uint8(1)
-	BindCommand      = uint8(2)
-	AssociateCommand = uint8(3)
+	connectCommand   = uint8(1)
+	bindCommand      = uint8(2)
+	associateCommand = uint8(3)
 	ipv4Address      = uint8(1)
 	fqdnAddress      = uint8(3)
 	ipv6Address      = uint8(4)
