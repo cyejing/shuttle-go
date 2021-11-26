@@ -5,7 +5,7 @@
 Shuttle是功能小巧的代理网关，连通每个地方，互联万物。
 
 ## 使用
-下载执行文件[Release 页面](https://github.com/cyejing/shuttle/releases)
+下载执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
 ### 启动服务端
 ``./shuttles -c example/shuttles.yaml``
 
