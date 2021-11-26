@@ -16,6 +16,7 @@ import (
 
 var crlf = []byte{0x0d, 0x0a}
 
+//Trojan struct
 type Trojan struct {
 	Hash     string
 	Metadata *Metadata
@@ -26,6 +27,7 @@ func exitHash(hash []byte) (*server.Password, bool) {
 	return pw, pw != nil
 }
 
+//Encode write byte trojan
 func (s *Trojan) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, maxPacketSize))
 	buf.Write([]byte(s.Hash))
@@ -38,6 +40,7 @@ func (s *Trojan) Encode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+//Decode read byte trojan
 func (s *Trojan) Decode(reader io.Reader) error {
 	hash := [56]byte{}
 	n, err := reader.Read(hash[:])
@@ -62,6 +65,7 @@ func (s *Trojan) Decode(reader io.Reader) error {
 	return nil
 }
 
+//DialTrojan dial trojan remote
 func DialTrojan(metadata *Metadata) (net.Conn, error) {
 	config := client.GetConfig()
 	outbound, err := tls.Dial("tcp", config.RemoteAddr, &tls.Config{
@@ -90,6 +94,7 @@ func DialTrojan(metadata *Metadata) (net.Conn, error) {
 	return outbound, err
 }
 
+//PeekTrojan peek trojan protocol
 func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 	peek, err := bufr.Peek(56)
 	if err != nil {
@@ -103,21 +108,22 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
 		if err != nil {
 			log.Warnf("trojan proto decode fail %v", err)
 			return nil
-		} else {
-			_, err := bufr.Discard(pr.i)
-			if err != nil {
-				log.Warnf("Discard trojan proto fail %v", err)
-				return nil
-			}
-			outbound, err := net.Dial("tcp", trojan.Metadata.address.String())
-			if err != nil {
-				return utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
-			}
-			log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
-
-			defer outbound.Close()
-			return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
 		}
+
+		_, err = bufr.Discard(pr.i)
+		if err != nil {
+			log.Warnf("Discard trojan proto fail %v", err)
+			return nil
+		}
+
+		outbound, err := net.Dial("tcp", trojan.Metadata.address.String())
+		if err != nil {
+			return utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
+		}
+		log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
+
+		defer outbound.Close()
+		return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
 	}
 	return nil
 }
@@ -145,11 +151,13 @@ const (
 	mux       command = 0x7f
 )
 
+//Metadata struct
 type Metadata struct {
 	command
 	*address
 }
 
+//ReadFrom metadata read byte
 func (r *Metadata) ReadFrom(rr io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(rr, byteBuf[:])
@@ -165,6 +173,7 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 	return nil
 }
 
+//WriteTo metadata write byte
 func (r *Metadata) WriteTo(w io.Writer) error {
 	buf := bytes.NewBuffer(make([]byte, 0, 64))
 	buf.WriteByte(byte(r.command))
@@ -177,10 +186,12 @@ func (r *Metadata) WriteTo(w io.Writer) error {
 	return err
 }
 
+//Network network string
 func (r *Metadata) Network() string {
 	return r.address.Network()
 }
 
+//String address string
 func (r *Metadata) String() string {
 	return r.address.String()
 }

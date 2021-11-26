@@ -73,6 +73,7 @@ func (s *Socks5) LSTRequest() (err error) {
 	return nil
 }
 
+//DialSendTrojan send trojan protocol to remote
 func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
 	conn, err := net.Dial(network, addr)
 	if err != nil {
@@ -109,6 +110,7 @@ const (
 	ipv6Address      = uint8(4)
 )
 
+//send reply byte
 const (
 	SuccessReply uint8 = iota
 	serverFailure
@@ -121,6 +123,7 @@ const (
 	addrTypeNotSupported
 )
 
+//SendReply send reply byte
 func (s *Socks5) SendReply(resp uint8) error {
 	// Format the address
 	addrType := ipv4Address

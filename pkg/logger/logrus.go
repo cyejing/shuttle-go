@@ -32,6 +32,7 @@ func init() {
 	})
 }
 
+// NewLog for packages
 func NewLog() *logrus.Logger {
 	return glog
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// SErr for trace err
 type SErr struct {
 	Msg  string
 	Pc   uintptr
@@ -18,6 +19,7 @@ func (e *SErr) Error() string {
 	return e.Msg + " : " + e.File + ":" + strconv.Itoa(e.Line)
 }
 
+// Base trace err
 func (e *SErr) Base(err error) *SErr {
 	if se, ok := err.(*SErr); ok {
 		e.Msg += " : " + se.Msg
@@ -51,9 +53,13 @@ func NewErr(msg string) *SErr {
 
 	return err
 }
+
+// BaseErrf new err formate
 func BaseErrf(msg string, e error, v ...interface{}) *SErr {
 	return NewErrf(msg, v).Base(e)
 }
+
+// BaseErr new err
 func BaseErr(msg string, e error) *SErr {
 	return NewErr(msg).Base(e)
 }

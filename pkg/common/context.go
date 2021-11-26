@@ -1,7 +1,4 @@
 package common
 
+//ContextKey key string
 type ContextKey string
-
-var (
-	ConnContextKey = ContextKey("ConnContextKey")
-)

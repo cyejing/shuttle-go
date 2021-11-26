@@ -8,6 +8,7 @@ import (
 
 var log = logger.NewLog()
 
+//Config struct
 type Config struct {
 	RunType    string `yaml:"runType"`
 	LocalAddr  string `yaml:"localAddr"`
@@ -15,6 +16,7 @@ type Config struct {
 	Password   string
 }
 
+//global config
 var (
 	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "example/shuttlec.yaml", "example/shuttlec.yml"}
 	GlobalConfig      = &Config{
@@ -22,6 +24,7 @@ var (
 	}
 )
 
+//Load load config
 func Load(path string) (config *Config, err error) {
 	var data []byte
 	switch path {
@@ -44,6 +47,7 @@ func Load(path string) (config *Config, err error) {
 	return GlobalConfig, err
 }
 
+//GetConfig get config
 func GetConfig() *Config {
 	return GlobalConfig
 }

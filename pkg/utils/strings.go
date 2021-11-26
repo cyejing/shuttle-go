@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// SHA224String sha
 func SHA224String(password string) string {
 	hash := sha256.New224()
 	hash.Write([]byte(password))

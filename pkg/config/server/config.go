@@ -9,6 +9,7 @@ import (
 
 var log = logger.NewLog()
 
+//Config struct
 type Config struct {
 	Addr      string `yaml:"addr"`
 	SslAddr   string `yaml:"sslAddr"`
@@ -19,6 +20,7 @@ type Config struct {
 	Instances []Instance
 }
 
+//Route struct
 type Route struct {
 	ID       string `yaml:"id"`
 	Order    int
@@ -28,6 +30,7 @@ type Route struct {
 	Loggable bool
 }
 
+// GetFilter route get filter
 func (r Route) GetFilter(name string) Filter {
 	for _, filter := range r.Filters {
 		if name == filter.Name {
@@ -37,6 +40,7 @@ func (r Route) GetFilter(name string) Filter {
 	return *new(Filter)
 }
 
+// Instance struct
 type Instance struct {
 	Group        string
 	URL          string `yaml:"url"`
@@ -45,6 +49,7 @@ type Instance struct {
 	Tags         []string
 }
 
+// Filter struct
 type Filter struct {
 	Name     string
 	Params   interface{}
@@ -52,6 +57,7 @@ type Filter struct {
 	Loggable bool
 }
 
+// Password struct
 type Password struct {
 	Raw  string
 	Hash string
@@ -67,6 +73,7 @@ var (
 	Passwords = make(map[string]*Password)
 )
 
+//Load load config
 func Load(path string) (config *Config, err error) {
 	var data []byte
 	switch path {
@@ -92,6 +99,7 @@ func Load(path string) (config *Config, err error) {
 	return GlobalConfig, err
 }
 
+//GetConfig get config
 func GetConfig() *Config {
 	return GlobalConfig
 }
