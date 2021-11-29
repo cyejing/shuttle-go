@@ -18,6 +18,11 @@ func main() {
 		panic(err)
 	}
 
+	err = logger.InitLog(c.LogFile)
+	if err != nil {
+		panic(err)
+	}
+
 	srv := &server.TLSServer{
 		Cert:    c.Cert,
 		Key:     c.Key,

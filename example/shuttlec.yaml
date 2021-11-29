@@ -1,4 +1,4 @@
 runType: socks
-localAddr: 127.0.0.1:1084
+localAddr: 127.0.0.1:1080
 remoteAddr: 127.0.0.1:4843
 password: cyejing123

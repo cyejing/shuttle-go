@@ -13,7 +13,8 @@ type Config struct {
 	RunType    string `yaml:"runType"`
 	LocalAddr  string `yaml:"localAddr"`
 	RemoteAddr string `yaml:"remoteAddr"`
-	Password   string
+	Password   string `yaml:"password"`
+	LogFile    string `yaml:"logFile"`
 }
 
 //global config
@@ -21,6 +22,7 @@ var (
 	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "example/shuttlec.yaml", "example/shuttlec.yml"}
 	GlobalConfig      = &Config{
 		LocalAddr: "127.0.0.1:1080",
+		LogFile:   "logs/shuttlec.log",
 	}
 )
 
@@ -35,13 +37,15 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
+			log.Infof("load config %s", config)
 			break
 		}
 	default:
-		data, err = ioutil.ReadFile(path)
+		log.Infof("load config %s", config)
 		if err != nil {
 			log.Fatalf("load config file %s err %v", path, err)
 		}
+		data, err = ioutil.ReadFile(path)
 	}
 	err = yaml.Unmarshal(data, GlobalConfig)
 	return GlobalConfig, err

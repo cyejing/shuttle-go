@@ -16,6 +16,7 @@ type Config struct {
 	Cert      string
 	Key       string
 	Passwords []string
+	LogFile   string `yaml:"logFile"`
 	Routes    []Route
 	Instances []Instance
 }
@@ -69,6 +70,7 @@ var (
 	GlobalConfig      = &Config{
 		Addr:    "127.0.0.1:4880",
 		SslAddr: "127.0.0.1:4843",
+		LogFile: "logs/shuttles.log",
 	}
 	Passwords = make(map[string]*Password)
 )
@@ -88,11 +90,11 @@ func Load(path string) (config *Config, err error) {
 			break
 		}
 	default:
-		log.Infof("load config %s", path)
 		data, err = ioutil.ReadFile(path)
 		if err != nil {
 			log.Fatalf("load config file %s err %v", path, err)
 		}
+		log.Infof("load config %s", path)
 	}
 	err = yaml.Unmarshal(data, GlobalConfig)
 	initPasswords()

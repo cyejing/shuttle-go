@@ -68,7 +68,7 @@ func (s *TLSServer) ListenAndServe(addr string) error {
 	return s.Server(ln)
 }
 
-//Server server ;n
+//Server server ln
 func (s *TLSServer) Server(ln net.Listener) error {
 	log.Infof("server listen at %s", ln.Addr())
 	var tempDelay time.Duration
