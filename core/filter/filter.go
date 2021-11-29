@@ -45,6 +45,7 @@ type Chain struct {
 // registry filter for chain
 var registryFilters = map[string]Filter{}
 
+// RegistryFilter register filter
 func RegistryFilter(filter Filter) {
 	registryFilters[filter.Name()] = filter
 }
@@ -56,6 +57,7 @@ func Init() {
 	}
 }
 
+// NewChain new chain
 func NewChain(resp http.ResponseWriter, req *http.Request, route config.Route) *Chain {
 	var filters = make([]Filter, len(route.Filters))
 	for i, filter := range route.Filters {
@@ -74,6 +76,7 @@ func NewChain(resp http.ResponseWriter, req *http.Request, route config.Route) *
 	}
 }
 
+//DoFilter run filter
 func (c *Chain) DoFilter() {
 
 	for _, f := range c.Filters {

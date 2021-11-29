@@ -12,6 +12,7 @@ func init() {
 	RegistryFilter(&rewrite{name: "rewrite"})
 }
 
+//RewriteConfig struct
 type RewriteConfig struct {
 	Regex       string
 	Replacement string

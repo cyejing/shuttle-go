@@ -6,10 +6,12 @@ import (
 	"net"
 )
 
+//Socks5Server struct
 type Socks5Server struct {
 	DialFunc func(metadata *codec.Metadata) (net.Conn, error)
 }
 
+//ListenAndServe listen and serve
 func (s *Socks5Server) ListenAndServe(network, addr string) error {
 	l, err := net.Listen(network, addr)
 	log.Infof("socks5 listen at %s", addr)
@@ -32,6 +34,7 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 	}
 }
 
+//ServeConn conn
 func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 	socks5 := codec.Socks5{Conn: conn}
 

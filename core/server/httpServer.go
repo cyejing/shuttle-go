@@ -12,10 +12,12 @@ import (
 
 var log = logger.NewLog()
 
+//RouteMux struct
 type RouteMux struct {
 	Routes []config.Route
 }
 
+//NewRouteMux new route mux
 func NewRouteMux() *RouteMux {
 	c := config.GetConfig()
 

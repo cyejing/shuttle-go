@@ -14,11 +14,13 @@ const (
 	noAuth        = byte(0x00)
 )
 
+//Socks5 struct
 type Socks5 struct {
 	Conn     net.Conn
 	Metadata *Metadata
 }
 
+//HandleHandshake handshake
 func (s *Socks5) HandleHandshake() error {
 	bufConn := bufio.NewReader(s.Conn)
 	version := []byte{0}
@@ -48,6 +50,7 @@ func (s *Socks5) HandleHandshake() error {
 	return nil
 }
 
+//LSTRequest lst
 func (s *Socks5) LSTRequest() (err error) {
 	conn := s.Conn
 	// Read the version byte

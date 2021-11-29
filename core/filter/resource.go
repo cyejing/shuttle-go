@@ -14,6 +14,7 @@ func init() {
 	RegistryFilter(&resource{name: "resource"})
 }
 
+// ResourceConfig struct
 type ResourceConfig struct {
 	Root string
 }

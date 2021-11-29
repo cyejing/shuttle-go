@@ -10,6 +10,7 @@ type proxy struct {
 	name string
 }
 
+// ProxyConfig struct
 type ProxyConfig struct {
 	URI string `asn1:"url"`
 }

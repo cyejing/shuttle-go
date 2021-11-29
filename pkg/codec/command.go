@@ -1,4 +1,5 @@
 package codec
 
-type Commanda struct {
+//Command struct
+type Command struct {
 }

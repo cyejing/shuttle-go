@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-type Protocol string
-
 // TLSServer struct
 type TLSServer struct {
 	Cert    string
@@ -37,10 +35,12 @@ func (r *response) Write(bs []byte) (int, error) {
 	return r.bufBody.Write(bs)
 }
 
+//WriteHeader write header
 func (r *response) WriteHeader(statusCode int) {
 	r.resp.StatusCode = statusCode
 }
 
+//ListenAndServeTLS serve tls
 func (s *TLSServer) ListenAndServeTLS(addr string) error {
 	cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
 
@@ -56,6 +56,8 @@ func (s *TLSServer) ListenAndServeTLS(addr string) error {
 
 	return s.Server(ln)
 }
+
+//ListenAndServe listen and server addr
 func (s *TLSServer) ListenAndServe(addr string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -66,6 +68,7 @@ func (s *TLSServer) ListenAndServe(addr string) error {
 	return s.Server(ln)
 }
 
+//Server server ;n
 func (s *TLSServer) Server(ln net.Listener) error {
 	log.Infof("server listen at %s", ln.Addr())
 	var tempDelay time.Duration
