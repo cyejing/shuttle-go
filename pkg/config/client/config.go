@@ -13,6 +13,7 @@ type Config struct {
 	RunType    string `yaml:"runType"`
 	LocalAddr  string `yaml:"localAddr"`
 	RemoteAddr string `yaml:"remoteAddr"`
+	SSLEnable  bool   `yaml:"sslEnable"`
 	Password   string `yaml:"password"`
 	LogFile    string `yaml:"logFile"`
 }
@@ -23,6 +24,7 @@ var (
 	GlobalConfig      = &Config{
 		LocalAddr: "127.0.0.1:1080",
 		LogFile:   "logs/shuttlec.log",
+		SSLEnable: true,
 	}
 )
 
