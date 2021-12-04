@@ -43,7 +43,7 @@ func Load(path string) (config *Config, err error) {
 			break
 		}
 	default:
-		log.Infof("load config %s", config)
+		log.Infof("load config %v", config)
 		if err != nil {
 			log.Fatalf("load config file %s err %v", path, err)
 		}
