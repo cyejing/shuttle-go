@@ -130,7 +130,7 @@ func (c *conn) handle() error {
 
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
-		_, err = io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
+		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
 		return utils.BaseErr("read request fail", err)
 	}
 	resp := newResponse(req)

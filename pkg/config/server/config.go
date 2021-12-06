@@ -86,7 +86,7 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
-			log.Infof("load config %s", config)
+			log.Infof("load config %v", config)
 			break
 		}
 	default:

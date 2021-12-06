@@ -39,11 +39,11 @@ func Load(path string) (config *Config, err error) {
 				// is ok
 				continue
 			}
-			log.Infof("load config %s", config)
+			log.Infof("load config %v", config)
 			break
 		}
 	default:
-		log.Infof("load config %v", config)
+		log.Infof("load config %s", path)
 		if err != nil {
 			log.Fatalf("load config file %s err %v", path, err)
 		}
