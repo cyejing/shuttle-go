@@ -21,13 +21,13 @@ func (s *Socks5Server) ListenAndServe(network, addr string) error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Error("socks5 accept conn fail ", err)
+			log.Errorln("socks5 accept conn fail ", err)
 		}
 		go func() {
 			defer conn.Close()
 			err := s.ServeConn(conn)
 			if err != nil {
-				log.Error("handle socks5 fail ", err)
+				log.Errorln("handle socks5 fail ", err)
 				return
 			}
 		}()

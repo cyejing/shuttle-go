@@ -39,9 +39,6 @@ type closeWriter interface {
 }
 
 func proxyStream(dst io.Writer, src io.Reader, errCh chan error) {
-	//buf := bufio.NewReader(src)
-	//peek, _ := buf.Peek(64)
-	//log.Debugf("read bytes:\n%s", hex.Dump(peek))
 	_, err := io.Copy(dst, src)
 	if tcpConn, ok := dst.(closeWriter); ok {
 		err = tcpConn.CloseWrite()
