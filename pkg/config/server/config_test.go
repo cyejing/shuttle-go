@@ -11,5 +11,5 @@ func TestLoad(t *testing.T) {
 		t.FailNow()
 		return
 	}
-	assert.Equal(t, "cyejing123", load.Passwords[0])
+	assert.Equal(t, "sQtfRnfhcNoZYZh1wY9u", load.Passwords[0])
 }

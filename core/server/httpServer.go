@@ -21,7 +21,7 @@ type RouteMux struct {
 func NewRouteMux() *RouteMux {
 	c := config.GetConfig()
 
-	routeMux := &RouteMux{Routes: c.Routes}
+	routeMux := &RouteMux{Routes: c.Gateway.Routes}
 
 	sort.Slice(routeMux.Routes, func(i, j int) bool {
 		return routeMux.Routes[i].Order > routeMux.Routes[j].Order

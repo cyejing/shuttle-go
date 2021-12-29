@@ -20,8 +20,20 @@ type DialCommandS struct {
 	body []byte
 }
 
+func (c DialCommandS) Encode() ([]byte, error){
+	return nil, nil
+}
+
+type status int
+
+const (
+	Success status = iota
+	Fail
+)
+
 type RespCommandS struct {
 	*req
+	status
 	body []byte
 }
 

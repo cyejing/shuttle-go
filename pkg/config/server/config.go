@@ -17,8 +17,19 @@ type Config struct {
 	Key       string
 	Passwords []string
 	LogFile   string `yaml:"logFile"`
-	Routes    []Route
+	Gateway   Gateway
 	Instances []Instance
+	Wormhole  Wormhole
+}
+
+//Gateway struct
+type Gateway struct {
+	Routes []Route
+}
+
+//Wormhole struct
+type Wormhole struct {
+	Passwords []string
 }
 
 //Route struct
@@ -73,6 +84,7 @@ var (
 		LogFile: "logs/shuttles.log",
 	}
 	Passwords = make(map[string]*Password)
+	WHPasswords = make(map[string]*Password)
 )
 
 //Load load config

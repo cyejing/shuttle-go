@@ -1,4 +1,4 @@
-package core
+package test
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func startServer(sf chan int) {
 }
 
 func startClient(sf chan int) {
-	config, err := clientC.Load("../example/shuttlec.yaml")
+	config, err := clientC.Load("../example/shuttle-socks.yaml")
 	if err != nil {
 		return
 	}

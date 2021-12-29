@@ -5,11 +5,20 @@ import (
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
-	load, err := Load("../../../example/shuttlec.yaml")
+func TestLoadSocks(t *testing.T) {
+	load, err := Load("../../../example/shuttle-socks.yaml")
 	if err != nil {
 		t.FailNow()
 		return
 	}
-	assert.Equal(t, "socks", load.RunType)
+	assert.Equal(t, "sQtfRnfhcNoZYZh1wY9u", load.Password)
+}
+
+func TestLoadWormhole(t *testing.T) {
+	load, err := Load("../../../example/shuttle-wormhole.yaml")
+	if err != nil {
+		t.FailNow()
+		return
+	}
+	assert.Equal(t, "58JCEmvcBkRAk1XkK1iH", load.Password)
 }

@@ -3,26 +3,30 @@ sslAddr: 127.0.0.1:4843
 cert: example/s.cyejing.cn_chain.crt
 key: example/s.cyejing.cn_key.key
 passwords:
-  - cyejing123
-routes:
-  - id: na0mdwfr0lfuv4rubvt4gsg805uofhhk
-    order: 100
-    host: .*
-    loggable: true
-    filters:
-      - name: resource
-        params:
-          root: "./html"
-  - id: f1xb758a1hsrkguxtryjjt4swakayrf8
-    order: 120
-    path: /proxy
-    loggable: true
-    filters:
-      - name: rewrite
-        params:
-          regex: "/proxy/(.*)"
-          replacement: "/$1"
-      - name: proxy
-        params:
-          uri: "http://127.0.0.1:8088"
+  - sQtfRnfhcNoZYZh1wY9u
+gateway:
+  routes:
+    - id: APUGW4UDKHgRX8bQuqRErTn9LGwyuFfV
+      order: 100
+      host: .*
+      loggable: true
+      filters:
+        - name: resource
+          params:
+            root: "./html"
+    - id: L28dECFtGfGfP2BTN9iNvkUEm2BWLMw9
+      order: 120
+      path: /proxy
+      loggable: true
+      filters:
+        - name: rewrite
+          params:
+            regex: "/proxy/(.*)"
+            replacement: "/$1"
+        - name: proxy
+          params:
+            uri: "http://127.0.0.1:8088"
+wormhole:
+  passwords:
+    - 58JCEmvcBkRAk1XkK1iH
 

@@ -40,6 +40,7 @@ func (p *ProxyServer) ServeConn(c net.Conn) error {
 		if err != nil {
 			return utils.BaseErr("proxy read byte fail", err)
 		}
-		codec.NewDialCommand(bs[0:i])
+		dialCommand := codec.NewDialCommand(bs[0:i])
+		dialCommand.Encode()
 	}
 }

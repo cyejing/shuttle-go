@@ -22,24 +22,6 @@ type TLSServer struct {
 	Handler http.Handler
 }
 
-type response struct {
-	resp    *http.Response
-	bufBody *bytes.Buffer
-}
-
-func (r *response) Header() http.Header {
-	return r.resp.Header
-}
-
-func (r *response) Write(bs []byte) (int, error) {
-	return r.bufBody.Write(bs)
-}
-
-//WriteHeader write header
-func (r *response) WriteHeader(statusCode int) {
-	r.resp.StatusCode = statusCode
-}
-
 //ListenAndServeTLS serve tls
 func (s *TLSServer) ListenAndServeTLS(addr string) error {
 	cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
@@ -108,6 +90,24 @@ func (s *TLSServer) Server(ln net.Listener) error {
 	}
 }
 
+type response struct {
+	resp    *http.Response
+	bufBody *bytes.Buffer
+}
+
+func (r *response) Header() http.Header {
+	return r.resp.Header
+}
+
+func (r *response) Write(bs []byte) (int, error) {
+	return r.bufBody.Write(bs)
+}
+
+//WriteHeader write header
+func (r *response) WriteHeader(statusCode int) {
+	r.resp.StatusCode = statusCode
+}
+
 type conn struct {
 	rwc     net.Conn
 	handler http.Handler
@@ -123,11 +123,27 @@ func (c *conn) handle() error {
 		return utils.BaseErr("handshake check fail", err)
 	}
 
-	err = codec.PeekTrojan(bufr, c.rwc)
+	ok, err := codec.PeekTrojan(bufr, c.rwc)
 	if err != nil {
 		return utils.BaseErr("peek trojan fail", err)
 	}
 
+	ok, err = codec.PeekWormhole(bufr, c.rwc)
+	if err != nil {
+		return utils.BaseErr("peek wormhole fail", err)
+	}
+
+	if !ok {
+		err = c.handleHttp(err, bufr)
+		if err != nil {
+			return utils.BaseErr("handle http fail", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *conn) handleHttp(err error, bufr *bufio.Reader) error {
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
 		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
@@ -144,7 +160,6 @@ func (c *conn) handle() error {
 	if err != nil {
 		return utils.BaseErr("finish request fail", err)
 	}
-
 	return nil
 }
 
@@ -162,14 +177,6 @@ func (c *conn) handshakeCheck() error {
 		}
 	}
 	return nil
-}
-
-func tlsRecordHeaderLooksLikeHTTP(hdr [5]byte) bool {
-	switch string(hdr[:]) {
-	case "GET /", "HEAD ", "POST ", "PUT /", "OPTIO":
-		return true
-	}
-	return false
 }
 
 func (c *conn) finishRequest() error {
@@ -191,6 +198,14 @@ func (c *conn) finishRequest() error {
 		return utils.BaseErr("response write fail", err)
 	}
 	return nil
+}
+
+func tlsRecordHeaderLooksLikeHTTP(hdr [5]byte) bool {
+	switch string(hdr[:]) {
+	case "GET /", "HEAD ", "POST ", "PUT /", "OPTIO":
+		return true
+	}
+	return false
 }
 
 func newResponse(req *http.Request) *response {

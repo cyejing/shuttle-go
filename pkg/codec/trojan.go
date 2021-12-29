@@ -19,11 +19,6 @@ type Trojan struct {
 	Metadata *Metadata
 }
 
-func exitHash(hash []byte) (*server.Password, bool) {
-	pw := server.Passwords[string(hash)]
-	return pw, pw != nil
-}
-
 //Encode write byte trojan
 func (s *Trojan) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, maxPacketSize))
@@ -97,50 +92,35 @@ func DialTrojan(metadata *Metadata) (outbound net.Conn, err error) {
 }
 
 //PeekTrojan peek trojan protocol
-func PeekTrojan(bufr *bufio.Reader, conn net.Conn) error {
-	peek, err := bufr.Peek(56)
+func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
+	hash, err := bufr.Peek(56)
 	if err != nil {
-		return utils.BaseErr("peek bytes fail", err)
+		return false, utils.BaseErr("peek bytes fail", err)
 	}
-	if pw, ok := exitHash(peek); ok {
+	if pw := server.Passwords[string(hash)]; pw != nil {
 		log.Infof("%s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		trojan := Trojan{}
 		pr := &peekReader{r: bufr}
 		err := trojan.Decode(pr)
 		if err != nil {
 			log.Warnf("trojan proto decode fail %v", err)
-			return nil
+			return false, nil
 		}
 
 		_, err = bufr.Discard(pr.i)
 		if err != nil {
 			log.Warnf("Discard trojan proto fail %v", err)
-			return nil
+			return false, nil
 		}
 
 		outbound, err := net.Dial("tcp", trojan.Metadata.address.String())
 		if err != nil {
-			return utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
+			return false, utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
 		}
 		log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
 
 		defer outbound.Close()
-		return utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
+		return true, utils.ProxyStreamBuf(bufr, conn, outbound, outbound)
 	}
-	return nil
-}
-
-type peekReader struct {
-	r *bufio.Reader
-	i int
-}
-
-func (p *peekReader) Read(b []byte) (n int, err error) {
-	peek, err := p.r.Peek(p.i + len(b))
-	if err != nil {
-		return 0, err
-	}
-	ci := copy(b, peek[p.i:])
-	p.i += ci
-	return ci, nil
+	return false, nil
 }

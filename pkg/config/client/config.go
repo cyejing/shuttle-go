@@ -11,6 +11,7 @@ var log = logger.NewLog()
 //Config struct
 type Config struct {
 	RunType    string `yaml:"runType"`
+	Name       string `yaml:"name"`
 	LocalAddr  string `yaml:"localAddr"`
 	RemoteAddr string `yaml:"remoteAddr"`
 	SSLEnable  bool   `yaml:"sslEnable"`

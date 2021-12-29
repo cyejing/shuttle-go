@@ -18,9 +18,10 @@ clean:
 	rm -f *.zip
 	rm -f *.dat
 
-test:
-	# Disable Bloomfilter when testing
-	SHADOWSOCKS_SF_CAPACITY="-1" $(GO_DIR)go test -v ./...
+test: gotest
+
+gotest:
+	$(GO_DIR)go test -v --cover ./...
 
 shuttles:
 	mkdir -p $(BUILD_DIR)
