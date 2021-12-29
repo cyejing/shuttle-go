@@ -10,6 +10,9 @@ Shuttle目标是让互联更通畅，触达每个地方。
 - Socks5代理通道
 - 长连接代理通道
 
+## Architecture
+
+![architecture](/doc/pic/architecture.png)
 
 ## Download
 下载可执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
