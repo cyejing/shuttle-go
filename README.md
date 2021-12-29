@@ -2,11 +2,22 @@
 [![ci-test-build](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml/badge.svg)](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cyejing/shuttle)](https://goreportcard.com/report/github.com/cyejing/shuttle)
 
-Shuttle是功能小巧的代理网关，连通每个地方，互联万物。
+Shuttle目标是让互联更通畅，触达每个地方。
 
-## 使用
-下载执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
-### 启动服务端
+## Feature
+
+- 反向代理Http请求
+- Socks5代理通道
+- 长连接代理通道
+
+
+## Download
+下载可执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
+
+## Quick Start 
+
+### Socks5代理使用
+#### Start Server
 ``./shuttles -c example/shuttles.yaml``
 
 配置参数
@@ -19,7 +30,7 @@ key: example/s.cyejing.cn_key.key #https证书
 passwords:
   - sQtfRnfhcNoZYZh1wY9u #对应客户端密码
 ```
-### 启动客户端
+#### Start Client
 ``./shuttlec -c example/shuttlec.yaml``
 
 配置参数
@@ -31,5 +42,40 @@ password: sQtfRnfhcNoZYZh1wY9u #对应服务器密码
 
 ```
 
-### 浏览器设置socks5代理
+#### 浏览器设置socks5代理
 Enjoy
+
+### Route代理使用
+#### Start Server
+``./shuttles -c example/shuttles.yaml``
+
+配置参数
+```yaml
+#example/shuttles.yaml
+addr: 127.0.0.1:4880  #http端口
+sslAddr: 127.0.0.1:4843 #https端口
+cert: example/s.cyejing.cn_chain.crt #https证书
+key: example/s.cyejing.cn_key.key #https证书
+gateway:
+  routes:
+    - id: APUGW4UDKHgRX8bQuqRErTn9LGwyuFfV
+      order: 100
+      host: .* #正则匹配域名
+      loggable: true
+      filters:
+        - name: resource
+          params:
+            root: "./html"
+    - id: L28dECFtGfGfP2BTN9iNvkUEm2BWLMw9
+      order: 120
+      path: /proxy  #正则匹配路径
+      loggable: true
+      filters:
+        - name: rewrite
+          params:
+            regex: "/proxy/(.*)"
+            replacement: "/$1"
+        - name: proxy
+          params:
+            uri: "http://127.0.0.1:8088"
+```
