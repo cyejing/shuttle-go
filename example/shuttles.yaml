@@ -2,8 +2,9 @@ addr: 127.0.0.1:4880
 sslAddr: 127.0.0.1:4843
 cert: example/s.cyejing.cn_chain.crt
 key: example/s.cyejing.cn_key.key
-passwords:
-  - sQtfRnfhcNoZYZh1wY9u
+trojan:
+  passwords:
+    - sQtfRnfhcNoZYZh1wY9u
 gateway:
   routes:
     - id: APUGW4UDKHgRX8bQuqRErTn9LGwyuFfV

@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadSocks(t *testing.T) {
-	load, err := Load("../../../example/shuttle-socks.yaml")
+	load, err := Load("../../../example/shuttlec-socks.yaml")
 	if err != nil {
 		t.FailNow()
 		return
@@ -15,7 +15,7 @@ func TestLoadSocks(t *testing.T) {
 }
 
 func TestLoadWormhole(t *testing.T) {
-	load, err := Load("../../../example/shuttle-wormhole.yaml")
+	load, err := Load("../../../example/shuttlec-wormhole.yaml")
 	if err != nil {
 		t.FailNow()
 		return

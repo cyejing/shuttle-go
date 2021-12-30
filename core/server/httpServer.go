@@ -35,7 +35,6 @@ func NewRouteMux() *RouteMux {
 func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	route, err := matchRoute(r.Routes, req)
 	if err != nil {
-		//TODO
 		log.Trace(err)
 		return
 	}

@@ -26,7 +26,7 @@ func startServer(sf chan int) {
 }
 
 func startClient(sf chan int) {
-	config, err := clientC.Load("../example/shuttle-socks.yaml")
+	config, err := clientC.Load("../example/shuttlec-socks.yaml")
 	if err != nil {
 		return
 	}

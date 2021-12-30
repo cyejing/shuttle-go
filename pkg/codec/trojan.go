@@ -73,7 +73,7 @@ func DialTrojan(metadata *Metadata) (outbound net.Conn, err error) {
 	}
 
 	socks := &Trojan{
-		Hash: utils.SHA224String(config.Password),
+		Hash: config.GetHash(),
 		Metadata: &Metadata{
 			socksCommand: connect,
 			address:      metadata.address,
@@ -98,7 +98,7 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 		return false, utils.BaseErr("peek bytes fail", err)
 	}
 	if pw := server.Passwords[string(hash)]; pw != nil {
-		log.Infof("%s authenticated as %s", conn.RemoteAddr(), pw.Raw)
+		log.Infof("trojan %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		trojan := Trojan{}
 		pr := &peekReader{r: bufr}
 		err := trojan.Decode(pr)

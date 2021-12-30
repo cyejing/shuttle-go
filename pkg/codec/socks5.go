@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -78,34 +77,6 @@ func (s *Socks5) LSTRequest() (err error) {
 		address:      address,
 	}
 	return nil
-}
-
-//DialSendTrojan send trojan protocol to remote
-func (s *Socks5) DialSendTrojan(network, addr string) (net.Conn, error) {
-	conn, err := net.Dial(network, addr)
-	if err != nil {
-		return nil, utils.BaseErrf("socks5 dial remote fai %sl", err, addr)
-	}
-	c := config.GetConfig()
-
-	remoteAddr, err := newAddressFromAddr("tcp", c.RemoteAddr)
-	if err != nil {
-		return nil, utils.BaseErrf("socks5 send trojan fail %v", err, c.RemoteAddr)
-	}
-	trojan := &Trojan{
-		Hash: utils.SHA224String(c.Password),
-		Metadata: &Metadata{
-			socksCommand: connect,
-			address:      remoteAddr,
-		},
-	}
-	encode, err := trojan.Encode()
-	if err != nil {
-		return nil, utils.BaseErrf("socks5 encode trojan fail %v", err, c.RemoteAddr)
-	}
-
-	conn.Write(encode)
-	return conn, nil
 }
 
 const (

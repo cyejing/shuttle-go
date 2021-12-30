@@ -1,37 +1,52 @@
 package codec
 
+import (
+	"io"
+)
+
 //Command struct
-type command byte
+type commandEnum byte
 
 const (
-	DialCommand command = iota
-	RespCommand
+	ConnectCE commandEnum = iota
+	DialCE
+	RespCE
+)
+
+type status int
+
+const (
+	SuccessStatus status = iota
+	FailStatus
 )
 
 type req struct {
-	command
+	commandEnum
 	reqId int32
 	len   int32
 }
 
-type DialCommandS struct {
+type ConnectCommand struct {
+	*req
+	name string
+}
+
+func (c ConnectCommand) Decode(r io.Reader) error{
+	return nil
+}
+
+type DialCommand struct {
 	*req
 	*address
 	body []byte
 }
 
-func (c DialCommandS) Encode() ([]byte, error){
+func (c DialCommand) Encode() ([]byte, error){
 	return nil, nil
 }
 
-type status int
 
-const (
-	Success status = iota
-	Fail
-)
-
-type RespCommandS struct {
+type RespCommand struct {
 	*req
 	status
 	body []byte
@@ -44,11 +59,11 @@ func newReqId() int32 {
 	return iotaReqId
 }
 
-func NewDialCommand(body []byte) *DialCommandS {
-	return &DialCommandS{
+func NewDialCommand(body []byte) *DialCommand {
+	return &DialCommand{
 		req: &req{
 			reqId:   newReqId(),
-			command: DialCommand,
+			commandEnum: DialCE,
 			len:     int32(len(body)),
 		},
 		body: body,

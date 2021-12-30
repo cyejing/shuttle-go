@@ -1,7 +1,9 @@
 package client
 
 import (
+	"github.com/cyejing/shuttle/pkg/config"
 	"github.com/cyejing/shuttle/pkg/logger"
+	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
@@ -21,8 +23,13 @@ type Config struct {
 
 //global config
 var (
-	defaultConfigPath = []string{"shuttlec.yaml", "shuttlec.yaml", "example/shuttlec.yaml", "example/shuttlec.yml"}
-	GlobalConfig      = &Config{
+	defaultConfigPath = []string{
+		"shuttlec-socks.yaml",
+		"shuttlec-wormhole.yaml",
+		"example/shuttlec-socks.yaml",
+		"example/shuttlec-wormhole.yaml",
+	}
+	GlobalConfig = &Config{
 		LocalAddr: "127.0.0.1:1080",
 		LogFile:   "logs/shuttlec.log",
 		SSLEnable: true,
@@ -58,3 +65,23 @@ func Load(path string) (config *Config, err error) {
 func GetConfig() *Config {
 	return GlobalConfig
 }
+
+func (c *Config) IsSocks() bool {
+	return "socks" == c.RunType
+}
+
+func (c *Config) IsWormhole() bool {
+	return "wormhole" == c.RunType
+}
+
+func (c *Config) GetHash() string {
+	if c.IsSocks() {
+		return utils.SHA224String(config.TrojanSalt + c.Password + config.TrojanSalt)
+	} else if c.IsWormhole() {
+		return utils.SHA224String(config.WormholeSalt + c.Password + config.WormholeSalt)
+	} else {
+		log.Errorf("unknown run type %s,please check config", c.RunType)
+	}
+	return ""
+}
+

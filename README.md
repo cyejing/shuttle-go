@@ -30,11 +30,12 @@ addr: 127.0.0.1:4880  #http端口
 sslAddr: 127.0.0.1:4843 #https端口
 cert: example/s.cyejing.cn_chain.crt #https证书
 key: example/s.cyejing.cn_key.key #https证书
-passwords:
-  - sQtfRnfhcNoZYZh1wY9u #对应客户端密码
+trojan:
+  passwords:
+    - sQtfRnfhcNoZYZh1wY9u #对应客户端密码
 ```
 #### Start Client
-``./shuttlec -c example/shuttlec.yaml``
+``./shuttlec -c example/shuttlec-socks.yaml``
 
 配置参数
 ```yaml

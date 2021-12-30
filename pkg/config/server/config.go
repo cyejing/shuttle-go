@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/cyejing/shuttle/pkg/config"
 	logger "github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
@@ -15,10 +16,10 @@ type Config struct {
 	SslAddr   string `yaml:"sslAddr"`
 	Cert      string
 	Key       string
-	Passwords []string
 	LogFile   string `yaml:"logFile"`
 	Gateway   Gateway
 	Instances []Instance
+	Trojan  Trojan
 	Wormhole  Wormhole
 }
 
@@ -29,6 +30,11 @@ type Gateway struct {
 
 //Wormhole struct
 type Wormhole struct {
+	Passwords []string
+}
+
+//Trojan struct
+type Trojan struct {
 	Passwords []string
 }
 
@@ -75,6 +81,7 @@ type Password struct {
 	Hash string
 }
 
+
 // config var
 var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
@@ -83,7 +90,7 @@ var (
 		SslAddr: "127.0.0.1:4843",
 		LogFile: "logs/shuttles.log",
 	}
-	Passwords = make(map[string]*Password)
+	Passwords   = make(map[string]*Password)
 	WHPasswords = make(map[string]*Password)
 )
 
@@ -119,9 +126,16 @@ func GetConfig() *Config {
 }
 
 func initPasswords() {
-	for _, raw := range GlobalConfig.Passwords {
-		hash := utils.SHA224String(raw)
+	for _, raw := range GlobalConfig.Trojan.Passwords {
+		hash := utils.SHA224String(config.TrojanSalt + raw + config.TrojanSalt)
 		Passwords[hash] = &Password{
+			Raw:  raw,
+			Hash: hash,
+		}
+	}
+	for _, raw := range GlobalConfig.Wormhole.Passwords {
+		hash := utils.SHA224String(config.WormholeSalt + raw + config.WormholeSalt)
+		WHPasswords[hash] = &Password{
 			Raw:  raw,
 			Hash: hash,
 		}
