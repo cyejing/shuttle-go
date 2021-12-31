@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/cyejing/shuttle/core/server"
+	"github.com/cyejing/shuttle/core/client"
 	"github.com/cyejing/shuttle/pkg/codec"
 	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/logger"
@@ -24,8 +24,19 @@ func main() {
 		panic(err)
 	}
 
-	socks5 := &server.Socks5Server{
-		DialFunc: codec.DialTrojan,
+	switch c.RunType {
+	case "socks":
+		socks5 := &client.Socks5Server{
+			Config:   c,
+			DialFunc: codec.DialTrojan,
+		}
+		panic(socks5.ListenAndServe("tcp", c.LocalAddr))
+	case "wormhole":
+		wormhole := &client.Wormhole{
+			Config: c,
+			Name:   c.Name,
+		}
+		panic(wormhole.DialRemote("tcp", c.RemoteAddr))
 	}
-	panic(socks5.ListenAndServe("tcp", c.LocalAddr))
+
 }

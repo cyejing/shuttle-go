@@ -58,8 +58,7 @@ func (s *Trojan) Decode(reader io.Reader) error {
 }
 
 //DialTrojan dial trojan remote
-func DialTrojan(metadata *Metadata) (outbound net.Conn, err error) {
-	config := client.GetConfig()
+func DialTrojan(config *client.Config, metadata *Metadata) (outbound net.Conn, err error) {
 	if config.SSLEnable {
 		outbound, err = tls.Dial("tcp", config.RemoteAddr, &tls.Config{
 			InsecureSkipVerify: true,

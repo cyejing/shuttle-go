@@ -26,7 +26,7 @@ func main() {
 	srv := &server.TLSServer{
 		Cert:    c.Cert,
 		Key:     c.Key,
-		Handler: server.NewRouteMux(),
+		Handler: server.NewRouteMux(c),
 	}
 	ec := make(chan error, 2)
 	go func() {

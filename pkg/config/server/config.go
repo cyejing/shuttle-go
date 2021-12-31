@@ -120,11 +120,6 @@ func Load(path string) (config *Config, err error) {
 	return GlobalConfig, err
 }
 
-//GetConfig get config
-func GetConfig() *Config {
-	return GlobalConfig
-}
-
 func initPasswords() {
 	for _, raw := range GlobalConfig.Trojan.Passwords {
 		hash := utils.SHA224String(config.TrojanSalt + raw + config.TrojanSalt)

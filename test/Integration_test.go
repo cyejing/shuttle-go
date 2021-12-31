@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/cyejing/shuttle/core/client"
 	"github.com/cyejing/shuttle/core/server"
 	"github.com/cyejing/shuttle/pkg/codec"
 	clientC "github.com/cyejing/shuttle/pkg/config/client"
@@ -13,13 +14,13 @@ import (
 )
 
 func startServer(sf chan int) {
-	_, err := serverC.Load("../example/shuttles.yaml")
+	c, err := serverC.Load("../example/shuttles.yaml")
 	if err != nil {
 		return
 	}
 
 	srv := &server.TLSServer{
-		Handler: server.NewRouteMux(),
+		Handler: server.NewRouteMux(c),
 	}
 	sf <- 1
 	srv.ListenAndServe("127.0.0.1:4880")
@@ -34,7 +35,8 @@ func startClient(sf chan int) {
 	config.RemoteAddr = "127.0.0.1:4880"
 	config.LocalAddr = "127.0.0.1:4080"
 
-	socks5 := &server.Socks5Server{
+	socks5 := &client.Socks5Server{
+		Config: config,
 		DialFunc: codec.DialTrojan,
 	}
 

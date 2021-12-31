@@ -6,6 +6,7 @@ import (
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
+	"sync"
 )
 
 type Wormhole struct {
@@ -34,12 +35,38 @@ func (w *Wormhole) Decode(r io.Reader) error {
 	return nil
 }
 
-func (w *Wormhole) handleReq() {
+var ReqMap sync.Map
+
+func (w *Wormhole) handleReq() error {
 	for {
 		select {
 		case c := <-w.channel:
 			if dc, ok := c.(DialCommand); ok {
-				log.Infoln(dc)
+				ReqMap.Store(dc.reqId, dc.ReqBase)
+				bytes, err := dc.Encode()
+				if err != nil {
+					log.Warnf("encode dial command fail %v", err)
+				}
+				_, err = w.rwc.Write(bytes)
+				if err != nil {
+					return utils.BaseErr("handle ReqBase write byte fail", err)
+				}
+			}
+		}
+	}
+}
+
+func (w *Wormhole) handleResp() error {
+	for {
+		respC := &RespCommand{}
+		err := respC.Decode(w.br)
+		if err != nil {
+			log.Warnf("handle wormhole name:%s response fail, %v", w.Name, err)
+			return utils.BaseErr("handle resp decode response fail", err)
+		}
+		if r, ok := ReqMap.LoadAndDelete(respC.reqId); ok {
+			if loadReq, ok := r.(ReqBase); ok {
+				loadReq.respChan <- respC
 			}
 		}
 	}
@@ -60,7 +87,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 			channel: make(chan interface{}),
 		}
 		pr := &peekReader{r: br}
-		err := wormhole.Decode(pr)
+		err = wormhole.Decode(pr)
 		if err != nil {
 			log.Warnf("wormhole proto decode fail %v", err)
 			return false, nil
@@ -72,7 +99,19 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 			return false, nil
 		}
 
-		go wormhole.handleReq()
+		go func() {
+			err := wormhole.handleReq()
+			if err != nil {
+				log.Warn(err)
+			}
+		}()
+
+		go func() {
+			err := wormhole.handleResp()
+			if err != nil {
+				log.Warn(err)
+			}
+		}()
 
 		return true, nil
 	}

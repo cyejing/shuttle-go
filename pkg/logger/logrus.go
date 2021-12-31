@@ -43,7 +43,7 @@ func InitLog(file string) error {
 	if err != nil {
 		panic(err)
 	}
-	glog.Infof("log in file: %s \n", f.Name())
+	glog.Infof("log in file: %s", f.Name())
 	glog.SetOutput(io.MultiWriter(os.Stdout, f))
 	return nil
 }

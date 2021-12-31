@@ -18,9 +18,7 @@ type RouteMux struct {
 }
 
 //NewRouteMux new route mux
-func NewRouteMux() *RouteMux {
-	c := config.GetConfig()
-
+func NewRouteMux(c *config.Config) *RouteMux {
 	routeMux := &RouteMux{Routes: c.Gateway.Routes}
 
 	sort.Slice(routeMux.Routes, func(i, j int) bool {

@@ -24,9 +24,9 @@ type Config struct {
 //global config
 var (
 	defaultConfigPath = []string{
-		"shuttlec-socks.yaml",
-		"shuttlec-wormhole.yaml",
-		"example/shuttlec-socks.yaml",
+		//"shuttlec-socks.yaml",
+		//"shuttlec-wormhole.yaml",
+		//"example/shuttlec-socks.yaml",
 		"example/shuttlec-wormhole.yaml",
 	}
 	GlobalConfig = &Config{
@@ -61,10 +61,6 @@ func Load(path string) (config *Config, err error) {
 	return GlobalConfig, err
 }
 
-//GetConfig get config
-func GetConfig() *Config {
-	return GlobalConfig
-}
 
 func (c *Config) IsSocks() bool {
 	return "socks" == c.RunType

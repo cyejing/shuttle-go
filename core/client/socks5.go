@@ -1,14 +1,19 @@
-package server
+package client
 
 import (
 	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/pkg/config/client"
+	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
+var log = logger.NewLog()
+
 
 //Socks5Server struct
 type Socks5Server struct {
-	DialFunc func(metadata *codec.Metadata) (net.Conn, error)
+	Config *client.Config
+	DialFunc func(config *client.Config, metadata *codec.Metadata) (net.Conn, error)
 }
 
 //ListenAndServe listen and serve
@@ -47,7 +52,7 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 		return utils.BaseErr("socks5 LSTRequest fail", err)
 	}
 
-	outbound, err := s.DialFunc(socks5.Metadata)
+	outbound, err := s.DialFunc(s.Config, socks5.Metadata)
 	if err != nil {
 		return utils.BaseErrf("socks5 dial remote fail %v", err, outbound.RemoteAddr())
 	}
