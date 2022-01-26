@@ -36,7 +36,7 @@ func TestReqBase_Decode(t *testing.T) {
 func TestRespCommand_Decode(t *testing.T) {
 	body := [16]byte{0xa, 0xa, 0xa}
 	rc := &RespCommand{
-		status: SuccessStatus,
+		Status: SuccessStatus,
 		ReqId:  8,
 		Len:    16,
 		Body:   body[:],
@@ -53,7 +53,7 @@ func TestRespCommand_Decode(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(t, SuccessStatus, drc.status)
+	assert.Equal(t, SuccessStatus, drc.Status)
 	assert.Equal(t, uint32(8), drc.ReqId)
 	assert.Equal(t, uint32(16), drc.Len)
 	assert.Equal(t, len(body), len(drc.Body))
