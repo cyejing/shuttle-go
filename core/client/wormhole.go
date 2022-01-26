@@ -50,7 +50,8 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 			log.Warn(err)
 		}
 	}()
-	wormhole.Channel <- codec.NewExchangeCommand(w.Name)
+	wormhole.Channel <- codec.NewExchangeCommand(w.Name, nil)
+
 	err = wormhole.HandleConn()
 	if err != nil {
 		return err

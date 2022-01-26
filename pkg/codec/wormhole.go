@@ -39,17 +39,17 @@ func (w *Wormhole) HandleCommand() error {
 		buf.Reset()
 		select {
 		case c := <-w.Channel:
-			buf.WriteByte(byte(ReqType))
-			if dc, ok := c.(*ReqBase); ok {
-				ReqMap.Store(dc.reqId, dc)
-				cBytes, err := dc.Encode()
+			if ec, ok := c.(*ExchangeCommand); ok {
+				buf.WriteByte(byte(ReqType))
+				ReqMap.Store(ec.reqId, ec.ReqBase)
+				cBytes, err := ec.Encode()
 				if err != nil {
 					log.Warnf("encode dial command fail %v", err)
 				}
 				buf.Write(cBytes)
-			} else if ec, ok := c.(*ExchangeCommand); ok {
-				//ReqMap.Store(ec.reqId, ec.ReqBase)
-				cBytes, err := ec.Encode()
+			} else if rc, ok := c.(*RespCommand); ok {
+				buf.WriteByte(byte(RespType))
+				cBytes, err := rc.Encode()
 				if err != nil {
 					log.Warnf("encode dial command fail %v", err)
 				}
@@ -106,15 +106,16 @@ func (w *Wormhole) handleReq() error {
 	ce := commandEnum(ceb[0])
 	switch ce {
 	case ExchangeCE:
-		ec := ExchangeCommand{ReqBase :&ReqBase{commandEnum: ce}}
+		ec := ExchangeCommand{ReqBase: &ReqBase{commandEnum: ce}}
 		err := ec.Decode(w.Br)
 		if err != nil {
 			return utils.BaseErr("exchange command decode fail", err)
 		}
 		w.Name = ec.name
 		log.Info("exchange name:" + ec.name)
+		w.Channel <- NewRespCommand(SuccessStatus, ec.reqId, "ok")
 	case DialCE:
-		dc := DialCommand{ReqBase :&ReqBase{}}
+		dc := DialCommand{ReqBase: &ReqBase{}}
 		err := dc.Decode(w.Br)
 		if err != nil {
 			return utils.BaseErr("dial command decode fail", err)
@@ -130,9 +131,9 @@ func (w *Wormhole) handleResp() error {
 	if err != nil {
 		return utils.BaseErr("handle resp decode response command fail", err)
 	}
-	if r, ok := ReqMap.LoadAndDelete(respC.reqId); ok {
-		if loadReq, ok := r.(ReqBase); ok {
-			loadReq.respChan <- respC
+	if r, ok := ReqMap.LoadAndDelete(respC.ReqId); ok {
+		if loadReq, ok := r.(*ReqBase); ok {
+			loadReq.RespCall(respC)
 		}
 	}
 	return nil

@@ -21,7 +21,7 @@ type ReqBase struct {
 	reqId    uint32
 	len      uint32
 	body     []byte
-	respChan chan *RespCommand
+	RespCall func(resp *RespCommand)
 }
 
 func (rb *ReqBase) Decode(r io.Reader) error {
@@ -107,10 +107,10 @@ const (
 
 // RespCommand struct
 type RespCommand struct {
-	status
-	reqId uint32
-	len   uint32
-	body  []byte
+	Status status
+	ReqId  uint32
+	Len    uint32
+	Body   []byte
 }
 
 func (rc *RespCommand) Decode(r io.Reader) error {
@@ -118,27 +118,27 @@ func (rc *RespCommand) Decode(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	rc.status = status(statusByte)
+	rc.Status = status(statusByte)
 
 	reqId, err := ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	rc.reqId = reqId
+	rc.ReqId = reqId
 
 	bodyLen, err := ReadUint32(r)
 	if err != nil {
 		return err
 	}
-	rc.len = bodyLen
+	rc.Len = bodyLen
 
 	if bodyLen > 0 {
 		body := make([]byte, bodyLen)
 		_, err = io.ReadFull(r, body)
 		if err != nil {
-			return utils.BaseErr("response command read body fail", err)
+			return utils.BaseErr("response command read Body fail", err)
 		}
-		rc.body = body[:]
+		rc.Body = body[:]
 	}
 
 	return nil
@@ -146,15 +146,15 @@ func (rc *RespCommand) Decode(r io.Reader) error {
 
 func (rc *RespCommand) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
-	buf.WriteByte(byte(rc.status))
+	buf.WriteByte(byte(rc.Status))
 	reqIdByte := [4]byte{}
-	binary.BigEndian.PutUint32(reqIdByte[:], rc.reqId)
+	binary.BigEndian.PutUint32(reqIdByte[:], rc.ReqId)
 	buf.Write(reqIdByte[:])
 	lenByte := [4]byte{}
-	binary.BigEndian.PutUint32(lenByte[:], rc.len)
+	binary.BigEndian.PutUint32(lenByte[:], rc.Len)
 	buf.Write(lenByte[:])
 
-	buf.Write(rc.body)
+	buf.Write(rc.Body)
 	return buf.Bytes(), nil
 }
 
@@ -172,19 +172,38 @@ func NewDialCommand(body []byte) *DialCommand {
 			commandEnum: DialCE,
 			len:         uint32(len(body)),
 			body:        body,
+			RespCall:    defaultCall,
 		},
 	}
 }
 
-func NewExchangeCommand(name string) *ExchangeCommand {
+func NewExchangeCommand(name string, call func(resp *RespCommand)) *ExchangeCommand {
 	nameByte := []byte(name)
+	if call == nil {
+		call = defaultCall
+	}
 	return &ExchangeCommand{
 		ReqBase: &ReqBase{
 			commandEnum: ExchangeCE,
 			reqId:       newReqId(),
 			len:         uint32(len(nameByte)),
 			body:        nameByte,
+			RespCall:    call,
 		},
-		name:    name,
+		name: name,
+	}
+}
+
+func defaultCall(resp *RespCommand) {
+	log.Debugf("reqId %v have response status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
+}
+
+func NewRespCommand(s status, reqId uint32, msg string) *RespCommand {
+	buf := bytes.NewBufferString(msg)
+	return &RespCommand{
+		Status: s,
+		ReqId:  reqId,
+		Len:    uint32(buf.Len()),
+		Body:   buf.Bytes(),
 	}
 }

@@ -37,9 +37,9 @@ func TestRespCommand_Decode(t *testing.T) {
 	body := [16]byte{0xa, 0xa, 0xa}
 	rc := &RespCommand{
 		status: SuccessStatus,
-		reqId:  8,
-		len:    16,
-		body:   body[:],
+		ReqId:  8,
+		Len:    16,
+		Body:   body[:],
 	}
 	encodeByte, err := rc.Encode()
 	if err != nil {
@@ -54,8 +54,8 @@ func TestRespCommand_Decode(t *testing.T) {
 	}
 
 	assert.Equal(t, SuccessStatus, drc.status)
-	assert.Equal(t, uint32(8), drc.reqId)
-	assert.Equal(t, uint32(16), drc.len)
-	assert.Equal(t, len(body), len(drc.body))
-	assert.Equal(t, body[:], drc.body)
+	assert.Equal(t, uint32(8), drc.ReqId)
+	assert.Equal(t, uint32(16), drc.Len)
+	assert.Equal(t, len(body), len(drc.Body))
+	assert.Equal(t, body[:], drc.Body)
 }
