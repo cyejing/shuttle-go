@@ -99,11 +99,11 @@ func (w *Wormhole) HandleConn() error {
 }
 
 func (w *Wormhole) handleReq() error {
-	ceb, err := w.Br.ReadByte()
+	ceb, err := w.Br.Peek(1)
 	if err != nil {
 		return utils.BaseErr("read request command fail", err)
 	}
-	ce := commandEnum(ceb)
+	ce := commandEnum(ceb[0])
 	switch ce {
 	case ExchangeCE:
 		ec := ExchangeCommand{ReqBase :&ReqBase{commandEnum: ce}}

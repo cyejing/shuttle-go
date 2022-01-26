@@ -24,9 +24,9 @@ type Config struct {
 //global config
 var (
 	defaultConfigPath = []string{
-		//"shuttlec-socks.yaml",
-		//"shuttlec-wormhole.yaml",
-		//"example/shuttlec-socks.yaml",
+		"shuttlec-socks.yaml",
+		"shuttlec-wormhole.yaml",
+		"example/shuttlec-socks.yaml",
 		"example/shuttlec-wormhole.yaml",
 	}
 	GlobalConfig = &Config{

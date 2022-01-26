@@ -25,6 +25,11 @@ type ReqBase struct {
 }
 
 func (rb *ReqBase) Decode(r io.Reader) error {
+	ce, err := ReadByte(r)
+	if err != nil {
+		return utils.BaseErr("req base decode fail", err)
+	}
+	rb.commandEnum = commandEnum(ce)
 	reqId, err := ReadUint32(r)
 	if err != nil {
 		return utils.BaseErr("req base decode fail", err)
