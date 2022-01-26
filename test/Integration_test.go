@@ -59,6 +59,8 @@ func startWeb(sf chan int) {
 		for k, v := range r.Form {
 			fmt.Fprintf(w, "Form[%q] = %q\n", k, v)
 		}
+		fmt.Fprintf(w, "Query = %q\n", r.URL.Query())
+
 	})
 
 	sf <- 1

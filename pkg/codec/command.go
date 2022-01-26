@@ -11,7 +11,7 @@ import (
 type commandEnum byte
 
 const (
-	ConnectCE commandEnum = iota
+	ExchangeCE commandEnum = iota
 	DialCE
 	RespCE
 )
@@ -25,11 +25,6 @@ type ReqBase struct {
 }
 
 func (rb *ReqBase) Decode(r io.Reader) error {
-	ce, err := ReadByte(r)
-	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
-	}
-	rb.commandEnum = commandEnum(ce)
 	reqId, err := ReadUint32(r)
 	if err != nil {
 		return utils.BaseErr("req base decode fail", err)
@@ -65,12 +60,12 @@ func (rb *ReqBase) Encode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type ConnectCommand struct {
+type ExchangeCommand struct {
 	*ReqBase
 	name string
 }
 
-func (c *ConnectCommand) Decode(r io.Reader) error {
+func (c *ExchangeCommand) Decode(r io.Reader) error {
 	err := c.ReqBase.Decode(r)
 	if err != nil {
 		return utils.BaseErr("connect command decode fail", err)
@@ -78,7 +73,8 @@ func (c *ConnectCommand) Decode(r io.Reader) error {
 	c.name = string(c.body)
 	return nil
 }
-func (c *ConnectCommand) Encode() ([]byte, error) {
+
+func (c *ExchangeCommand) Encode() ([]byte, error) {
 	c.body = []byte(c.name)
 	reqBaseByte, err := c.ReqBase.Encode()
 	if err != nil {
@@ -142,6 +138,7 @@ func (rc *RespCommand) Decode(r io.Reader) error {
 
 	return nil
 }
+
 func (rc *RespCommand) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	buf.WriteByte(byte(rc.status))
@@ -174,11 +171,11 @@ func NewDialCommand(body []byte) *DialCommand {
 	}
 }
 
-func NewConnectCommand(name string) *ConnectCommand {
+func NewExchangeCommand(name string) *ExchangeCommand {
 	nameByte := []byte(name)
-	return &ConnectCommand{
+	return &ExchangeCommand{
 		ReqBase: &ReqBase{
-			commandEnum: ConnectCE,
+			commandEnum: ExchangeCE,
 			reqId:       newReqId(),
 			len:         uint32(len(nameByte)),
 			body:        nameByte,

@@ -63,3 +63,7 @@ func BaseErrf(msg string, e error, v ...interface{}) *SErr {
 func BaseErr(msg string, e error) *SErr {
 	return NewErr(msg).Base(e)
 }
+
+func Err(e error) *SErr {
+	return NewErr("").Base(e)
+}

@@ -2,6 +2,8 @@ package codec
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/hex"
 	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -12,13 +14,13 @@ import (
 type Wormhole struct {
 	Hash    string
 	Name    string
-	br      *bufio.Reader
-	rwc     net.Conn
-	channel chan interface{}
+	Br      *bufio.Reader
+	Rwc     net.Conn
+	Channel chan interface{}
 }
 
 func (w *Wormhole) Encode() ([]byte, error) {
-	return nil, nil
+	return []byte(w.Hash), nil
 }
 func (w *Wormhole) Decode(r io.Reader) error {
 	hash := [56]byte{}
@@ -26,50 +28,114 @@ func (w *Wormhole) Decode(r io.Reader) error {
 	if err != nil || n != 56 {
 		return utils.BaseErr("failed to read hash", err)
 	}
-	cc := &ConnectCommand{}
-	err = cc.Decode(r)
-	if err != nil {
-		return utils.BaseErr("decode ConnectCommand fail", err)
-	}
-	w.Name = cc.name
 	return nil
 }
 
 var ReqMap sync.Map
 
-func (w *Wormhole) handleReq() error {
+func (w *Wormhole) HandleCommand() error {
+	buf := bytes.NewBuffer([]byte{})
 	for {
+		buf.Reset()
 		select {
-		case c := <-w.channel:
-			if dc, ok := c.(DialCommand); ok {
-				ReqMap.Store(dc.reqId, dc.ReqBase)
-				bytes, err := dc.Encode()
+		case c := <-w.Channel:
+			buf.WriteByte(byte(ReqType))
+			if dc, ok := c.(*ReqBase); ok {
+				ReqMap.Store(dc.reqId, dc)
+				cBytes, err := dc.Encode()
 				if err != nil {
 					log.Warnf("encode dial command fail %v", err)
 				}
-				_, err = w.rwc.Write(bytes)
+				buf.Write(cBytes)
+			} else if ec, ok := c.(*ExchangeCommand); ok {
+				//ReqMap.Store(ec.reqId, ec.ReqBase)
+				cBytes, err := ec.Encode()
 				if err != nil {
-					return utils.BaseErr("handle ReqBase write byte fail", err)
+					log.Warnf("encode dial command fail %v", err)
 				}
+				buf.Write(cBytes)
+			} else {
+				return utils.NewErrf("unknown command %v", c)
+			}
+			log.Info("write bytes:")
+			log.Info(hex.Dump(buf.Bytes()))
+			_, err := w.Rwc.Write(buf.Bytes())
+			if err != nil {
+				return utils.BaseErr("handle ReqBase write byte fail", err)
 			}
 		}
 	}
 }
 
-func (w *Wormhole) handleResp() error {
+//Command struct
+type connType byte
+
+const (
+	ReqType connType = iota
+	RespType
+)
+
+func (w *Wormhole) HandleConn() error {
 	for {
-		respC := &RespCommand{}
-		err := respC.Decode(w.br)
+		b, err := w.Br.ReadByte()
 		if err != nil {
-			log.Warnf("handle wormhole name:%s response fail, %v", w.Name, err)
-			return utils.BaseErr("handle resp decode response fail", err)
-		}
-		if r, ok := ReqMap.LoadAndDelete(respC.reqId); ok {
-			if loadReq, ok := r.(ReqBase); ok {
-				loadReq.respChan <- respC
+			if err == io.EOF {
+				return utils.NewErr("read EOF conn is close")
 			}
+			return err
+		}
+		switch connType(b) {
+		case ReqType:
+			err = w.handleReq()
+		case RespType:
+			err = w.handleResp()
+		default:
+			log.Warn("unknown conn type:" + string(b))
+		}
+		if err != nil {
+			return err
 		}
 	}
+}
+
+func (w *Wormhole) handleReq() error {
+	ceb, err := w.Br.ReadByte()
+	if err != nil {
+		return utils.BaseErr("read request command fail", err)
+	}
+	ce := commandEnum(ceb)
+	switch ce {
+	case ExchangeCE:
+		ec := ExchangeCommand{ReqBase :&ReqBase{commandEnum: ce}}
+		err := ec.Decode(w.Br)
+		if err != nil {
+			return utils.BaseErr("exchange command decode fail", err)
+		}
+		w.Name = ec.name
+		log.Info("exchange name:" + ec.name)
+	case DialCE:
+		dc := DialCommand{ReqBase :&ReqBase{}}
+		err := dc.Decode(w.Br)
+		if err != nil {
+			return utils.BaseErr("dial command decode fail", err)
+		}
+		log.Infof("dial decode %v", dc)
+	}
+	return nil
+}
+
+func (w *Wormhole) handleResp() error {
+	respC := &RespCommand{}
+	err := respC.Decode(w.Br)
+	if err != nil {
+		return utils.BaseErr("handle resp decode response command fail", err)
+	}
+	if r, ok := ReqMap.LoadAndDelete(respC.reqId); ok {
+		if loadReq, ok := r.(ReqBase); ok {
+			loadReq.respChan <- respC
+		}
+	}
+	return nil
 }
 
 func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
@@ -82,9 +148,9 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		log.Infof("wormhole %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		wormhole := &Wormhole{
 			Hash:    string(hash),
-			br:      br,
-			rwc:     conn,
-			channel: make(chan interface{}),
+			Br:      br,
+			Rwc:     conn,
+			Channel: make(chan interface{}),
 		}
 		pr := &peekReader{r: br}
 		err = wormhole.Decode(pr)
@@ -100,19 +166,16 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		}
 
 		go func() {
-			err := wormhole.handleReq()
+			err := wormhole.HandleCommand()
 			if err != nil {
 				log.Warn(err)
 			}
 		}()
 
-		go func() {
-			err := wormhole.handleResp()
-			if err != nil {
-				log.Warn(err)
-			}
-		}()
-
+		err := wormhole.HandleConn()
+		if err != nil {
+			log.Warn(err)
+		}
 		return true, nil
 	}
 

@@ -1,8 +1,8 @@
 package client
 
 import (
+	"bufio"
 	"crypto/tls"
-	"encoding/hex"
 	"fmt"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/config/client"
@@ -12,7 +12,7 @@ import (
 
 type Wormhole struct {
 	Config *client.Config
-	Name string
+	Name   string
 }
 
 func (w *Wormhole) DialRemote(network, addr string) error {
@@ -26,30 +26,34 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 		conn, err = net.Dial(network, addr)
 	}
 	if err != nil {
-		return utils.BaseErr(fmt.Sprintf("dial remote addr fail %s",addr),err)
+		return utils.BaseErr(fmt.Sprintf("dial remote addr fail %s", addr), err)
 	}
 
-	hash :=w.Config.GetHash()
+	wormhole := &codec.Wormhole{
+		Hash:    w.Config.GetHash(),
+		Br:      bufio.NewReader(conn),
+		Rwc:     conn,
+		Channel: make(chan interface{}),
+	}
 
-	conn.Write([]byte(hash))
-
-	cc := codec.NewConnectCommand(w.Name)
-	connectByte, err := cc.Encode()
+	hashBytes, err := wormhole.Encode()
 	if err != nil {
-		return utils.BaseErr("connect command encode fail", err)
+		return utils.BaseErr("wormhole encode fail", err)
 	}
-	log.Info(hex.Dump(connectByte))
-
-	_, err = conn.Write(connectByte)
+	_, err = conn.Write(hashBytes)
+	if err != nil {
+		return utils.Err(err)
+	}
+	go func() {
+		err := wormhole.HandleCommand()
+		if err != nil {
+			log.Warn(err)
+		}
+	}()
+	wormhole.Channel <- codec.NewExchangeCommand(w.Name)
+	err = wormhole.HandleConn()
 	if err != nil {
 		return err
 	}
-
-	rc := codec.RespCommand{}
-	err = rc.Decode(conn)
-	if err != nil {
-		return err
-	}
-	log.Info(rc)
 	return nil
 }

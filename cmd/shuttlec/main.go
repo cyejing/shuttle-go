@@ -6,11 +6,13 @@ import (
 	"github.com/cyejing/shuttle/pkg/codec"
 	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/logger"
+	"time"
 )
 
 var (
 	configPath = flag.String("c", "", "config path")
 )
+var log = logger.NewLog()
 
 func main() {
 	flag.Parse()
@@ -36,7 +38,21 @@ func main() {
 			Config: c,
 			Name:   c.Name,
 		}
-		panic(wormhole.DialRemote("tcp", c.RemoteAddr))
+		for {
+			func() {
+				defer func() {
+					if err := recover(); err != nil {
+
+					}
+				}()
+				err := wormhole.DialRemote("tcp", c.RemoteAddr)
+				if err != nil {
+					log.Warn("remote conn err", err)
+				}
+			}()
+			time.Sleep(time.Second * 5)
+			log.Infof("repeat dial remote %s", c.RemoteAddr)
+		}
 	}
 
 }

@@ -10,7 +10,7 @@ import (
 func TestReqBase_Decode(t *testing.T) {
 	body := [16]byte{0xa, 0xa, 0xa}
 	rb := &ReqBase{
-		commandEnum: ConnectCE,
+		commandEnum: ExchangeCE,
 		reqId:       8,
 		len:         16,
 		body:        body[:],
@@ -26,7 +26,7 @@ func TestReqBase_Decode(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, ConnectCE, drb.commandEnum)
+	assert.Equal(t, ExchangeCE, drb.commandEnum)
 	assert.Equal(t, uint32(8), drb.reqId)
 	assert.Equal(t, uint32(16), drb.len)
 	assert.Equal(t, len(body), len(drb.body))
