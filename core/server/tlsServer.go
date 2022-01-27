@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/pkg/operate"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -128,7 +129,7 @@ func (c *conn) handle() error {
 		return utils.BaseErr("peek trojan fail", err)
 	}
 
-	ok, err = codec.PeekWormhole(bufr, c.rwc)
+	ok, err = operate.PeekWormhole(bufr, c.rwc)
 	if err != nil {
 		return utils.BaseErr("peek wormhole fail", err)
 	}

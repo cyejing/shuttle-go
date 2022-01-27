@@ -18,6 +18,7 @@ func SHA224String(password string) string {
 	return str
 }
 
+// SplitPathAndFile sha
 func SplitPathAndFile(s string) (string, string, error) {
 	if s == "" {
 		return "", "", fmt.Errorf("path can not empty")

@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/config/client"
+	"github.com/cyejing/shuttle/pkg/operate"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
@@ -29,11 +29,11 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 		return utils.BaseErr(fmt.Sprintf("dial remote addr fail %s", addr), err)
 	}
 
-	wormhole := &codec.Wormhole{
-		Hash:    w.Config.GetHash(),
-		Br:      bufio.NewReader(conn),
-		Rwc:     conn,
-		Channel: make(chan interface{}),
+	wormhole := &operate.Wormhole{
+		Name: w.Name,
+		Hash: w.Config.GetHash(),
+		Br:   bufio.NewReader(conn),
+		Rwc:  conn,
 	}
 
 	hashBytes, err := wormhole.Encode()
@@ -44,15 +44,8 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 	if err != nil {
 		return utils.Err(err)
 	}
-	go func() {
-		err := wormhole.HandleCommand()
-		if err != nil {
-			log.Warn(err)
-		}
-	}()
-	wormhole.Channel <- codec.NewExchangeCommand(w.Name, nil)
 
-	err = wormhole.HandleConn()
+	err = operate.NewDispatcher(wormhole).Exchange()
 	if err != nil {
 		return err
 	}

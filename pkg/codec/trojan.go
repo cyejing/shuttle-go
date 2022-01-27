@@ -75,7 +75,7 @@ func DialTrojan(config *client.Config, metadata *Metadata) (outbound net.Conn, e
 		Hash: config.GetHash(),
 		Metadata: &Metadata{
 			socksCommand: connect,
-			address:      metadata.address,
+			Address:      metadata.Address,
 		},
 	}
 	encode, err := socks.Encode()
@@ -99,22 +99,22 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 	if pw := server.Passwords[string(hash)]; pw != nil {
 		log.Infof("trojan %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		trojan := Trojan{}
-		pr := &peekReader{r: bufr}
+		pr := &PeekReader{R: bufr}
 		err := trojan.Decode(pr)
 		if err != nil {
 			log.Warnf("trojan proto decode fail %v", err)
 			return false, nil
 		}
 
-		_, err = bufr.Discard(pr.i)
+		_, err = bufr.Discard(pr.I)
 		if err != nil {
 			log.Warnf("Discard trojan proto fail %v", err)
 			return false, nil
 		}
 
-		outbound, err := net.Dial("tcp", trojan.Metadata.address.String())
+		outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
 		if err != nil {
-			return false, utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.address.String())
+			return false, utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.Address.String())
 		}
 		log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
 

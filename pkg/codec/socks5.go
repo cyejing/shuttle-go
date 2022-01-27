@@ -13,8 +13,8 @@ import (
 
 // socks5 const
 const (
-	socks5Version = byte(0x05)
-	noAuth        = byte(0x00)
+	Socks5Version = byte(0x05)
+	NoAuth        = byte(0x00)
 )
 
 //Socks5 struct
@@ -31,7 +31,7 @@ func (s *Socks5) HandleHandshake() error {
 		return utils.BaseErr("Failed to get version byte", err)
 	}
 	// Ensure we are compatible
-	if version[0] != socks5Version {
+	if version[0] != Socks5Version {
 		return utils.NewErrf("unsupported SOCKS version: %v", string(version))
 	}
 	header := []byte{0}
@@ -46,9 +46,9 @@ func (s *Socks5) HandleHandshake() error {
 		return utils.BaseErr("socks5 handshake fail", err)
 	}
 
-	useMethod := noAuth //默认不需要密码
+	useMethod := NoAuth //默认不需要密码
 
-	resp := []byte{socks5Version, useMethod}
+	resp := []byte{Socks5Version, useMethod}
 	s.Conn.Write(resp)
 	return nil
 }
@@ -56,17 +56,17 @@ func (s *Socks5) HandleHandshake() error {
 //LSTRequest lst
 func (s *Socks5) LSTRequest() (err error) {
 	conn := s.Conn
-	// Read the version byte
+	// Decode the version byte
 	header := []byte{0, 0, 0}
 	if _, err := io.ReadAtLeast(conn, header, 3); err != nil {
 		return utils.BaseErr("socks5 LSTRequest read header fail", err)
 	}
 	// Ensure we are compatible
-	if header[0] != socks5Version {
+	if header[0] != Socks5Version {
 		return utils.NewErrf("unsupported SOCKS version: %v", string(header[:1]))
 	}
 
-	address := new(address)
+	address := new(Address)
 	err = address.ReadFrom(conn)
 	if err != nil {
 		return utils.BaseErr("socks5 LSTRequest fail", err)
@@ -74,7 +74,7 @@ func (s *Socks5) LSTRequest() (err error) {
 
 	s.Metadata = &Metadata{
 		socksCommand: socksCommand(header[1]),
-		address:      address,
+		Address:      address,
 	}
 	return nil
 }
@@ -103,14 +103,14 @@ const (
 
 //SendReply send reply byte
 func (s *Socks5) SendReply(resp uint8) error {
-	// Format the address
+	// Format the Address
 	addrType := ipv4Address
 	addrBody := []byte{0, 0, 0, 0}
 	addrPort := 0
 
 	// Format the message
 	msg := make([]byte, 6+len(addrBody))
-	msg[0] = socks5Version
+	msg[0] = Socks5Version
 	msg[1] = resp
 	msg[2] = 0 // Reserved
 	msg[3] = addrType
@@ -136,7 +136,7 @@ const (
 //Metadata struct
 type Metadata struct {
 	socksCommand
-	*address
+	*Address
 }
 
 //ReadFrom metadata read byte
@@ -147,10 +147,10 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 		return err
 	}
 	r.socksCommand = socksCommand(byteBuf[0])
-	r.address = new(address)
-	err = r.address.ReadFrom(rr)
+	r.Address = new(Address)
+	err = r.Address.ReadFrom(rr)
 	if err != nil {
-		return utils.BaseErr("failed to marshal address", err)
+		return utils.BaseErr("failed to marshal Address", err)
 	}
 	return nil
 }
@@ -159,61 +159,61 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 func (r *Metadata) WriteTo(w io.Writer) error {
 	buf := bytes.NewBuffer(make([]byte, 0, 64))
 	buf.WriteByte(byte(r.socksCommand))
-	if err := r.address.WriteTo(buf); err != nil {
+	if err := r.Address.WriteTo(buf); err != nil {
 		return err
 	}
 	// use tcp by default
-	r.address.NetworkType = "tcp"
+	r.Address.NetworkType = "tcp"
 	_, err := w.Write(buf.Bytes())
 	return err
 }
 
 //Network network string
 func (r *Metadata) Network() string {
-	return r.address.Network()
+	return r.Address.Network()
 }
 
-//String address string
+//String Address string
 func (r *Metadata) String() string {
-	return r.address.String()
+	return r.Address.String()
 }
 
-type addressType byte
+type AddressType byte
 
 // trojan AddressType
 const (
-	iPv4       addressType = 1
-	domainName addressType = 3
-	iPv6       addressType = 4
+	IPv4       AddressType = 1
+	DomainName AddressType = 3
+	IPv6       AddressType = 4
 )
 
-type address struct {
+type Address struct {
 	DomainName  string
 	Port        int
 	NetworkType string
 	net.IP
-	addressType
+	AddressType
 }
 
-func (a *address) String() string {
-	switch a.addressType {
-	case iPv4:
+func (a *Address) String() string {
+	switch a.AddressType {
+	case IPv4:
 		return fmt.Sprintf("%s:%d", a.IP.String(), a.Port)
-	case iPv6:
+	case IPv6:
 		return fmt.Sprintf("[%s]:%d", a.IP.String(), a.Port)
-	case domainName:
+	case DomainName:
 		return fmt.Sprintf("%s:%d", a.DomainName, a.Port)
 	default:
 		return "INVALID_ADDRESS_TYPE"
 	}
 }
 
-func (a *address) Network() string {
+func (a *Address) Network() string {
 	return a.NetworkType
 }
 
-func (a *address) ResolveIP() (net.IP, error) {
-	if a.addressType == iPv4 || a.addressType == iPv6 {
+func (a *Address) ResolveIP() (net.IP, error) {
+	if a.AddressType == IPv4 || a.AddressType == IPv6 {
 		return a.IP, nil
 	}
 	if a.IP != nil {
@@ -227,31 +227,31 @@ func (a *address) ResolveIP() (net.IP, error) {
 	return addr.IP, nil
 }
 
-func (a *address) ReadFrom(r io.Reader) error {
+func (a *Address) ReadFrom(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
 		return utils.BaseErr("unable to read ATYP", err)
 	}
-	a.addressType = addressType(byteBuf[0])
-	switch a.addressType {
-	case iPv4:
+	a.AddressType = AddressType(byteBuf[0])
+	switch a.AddressType {
+	case IPv4:
 		var buf [6]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read iPv4", err)
+			return utils.BaseErr("failed to read IPv4", err)
 		}
 		a.IP = buf[0:4]
 		a.Port = int(binary.BigEndian.Uint16(buf[4:6]))
-	case iPv6:
+	case IPv6:
 		var buf [18]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read iPv6", err)
+			return utils.BaseErr("failed to read IPv6", err)
 		}
 		a.IP = buf[0:16]
 		a.Port = int(binary.BigEndian.Uint16(buf[16:18]))
-	case domainName:
+	case DomainName:
 		_, err := io.ReadFull(r, byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
@@ -267,35 +267,35 @@ func (a *address) ReadFrom(r io.Reader) error {
 		if ip := net.ParseIP(string(host)); ip != nil {
 			a.IP = ip
 			if ip.To4() != nil {
-				a.addressType = iPv4
+				a.AddressType = IPv4
 			} else {
-				a.addressType = iPv6
+				a.AddressType = IPv6
 			}
 		} else {
 			a.DomainName = string(host)
 		}
 		a.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.addressType), 10))
+		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	return nil
 }
 
-func (a *address) WriteTo(w io.Writer) error {
-	_, err := w.Write([]byte{byte(a.addressType)})
+func (a *Address) WriteTo(w io.Writer) error {
+	_, err := w.Write([]byte{byte(a.AddressType)})
 	if err != nil {
 		return err
 	}
-	switch a.addressType {
-	case domainName:
+	switch a.AddressType {
+	case DomainName:
 		w.Write([]byte{byte(len(a.DomainName))})
 		_, err = w.Write([]byte(a.DomainName))
-	case iPv4:
+	case IPv4:
 		_, err = w.Write(a.IP.To4())
-	case iPv6:
+	case IPv6:
 		_, err = w.Write(a.IP.To16())
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.addressType), 10))
+		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	if err != nil {
 		return err
@@ -306,7 +306,7 @@ func (a *address) WriteTo(w io.Writer) error {
 	return err
 }
 
-func newAddressFromAddr(network string, addr string) (*address, error) {
+func newAddressFromAddr(network string, addr string) (*Address, error) {
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
@@ -318,27 +318,27 @@ func newAddressFromAddr(network string, addr string) (*address, error) {
 	return newAddressFromHostPort(network, host, int(port)), nil
 }
 
-func newAddressFromHostPort(network string, host string, port int) *address {
+func newAddressFromHostPort(network string, host string, port int) *Address {
 	if ip := net.ParseIP(host); ip != nil {
 		if ip.To4() != nil {
-			return &address{
+			return &Address{
 				IP:          ip,
 				Port:        port,
-				addressType: iPv4,
+				AddressType: IPv4,
 				NetworkType: network,
 			}
 		}
-		return &address{
+		return &Address{
 			IP:          ip,
 			Port:        port,
-			addressType: iPv6,
+			AddressType: IPv6,
 			NetworkType: network,
 		}
 	}
-	return &address{
+	return &Address{
 		DomainName:  host,
 		Port:        port,
-		addressType: domainName,
+		AddressType: DomainName,
 		NetworkType: network,
 	}
 }

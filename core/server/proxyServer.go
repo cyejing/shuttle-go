@@ -1,8 +1,6 @@
 package server
 
 import (
-	"github.com/cyejing/shuttle/pkg/codec"
-	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
 
@@ -34,13 +32,5 @@ func (p *ProxyServer) ListenAndServe(network, addr string) error {
 }
 
 func (p *ProxyServer) ServeConn(c net.Conn) error {
-	for {
-		bs := make([]byte, 1024)
-		i, err := c.Read(bs)
-		if err != nil {
-			return utils.BaseErr("proxy read byte fail", err)
-		}
-		dialCommand := codec.NewDialCommand(bs[0:i])
-		dialCommand.Encode()
-	}
+	return nil
 }

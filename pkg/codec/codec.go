@@ -19,18 +19,18 @@ type Codec interface {
 	Decode(reader io.Reader) error
 }
 
-type peekReader struct {
-	r *bufio.Reader
-	i int
+type PeekReader struct {
+	R *bufio.Reader
+	I int
 }
 
-func (p *peekReader) Read(b []byte) (n int, err error) {
-	peek, err := p.r.Peek(p.i + len(b))
+func (p *PeekReader) Read(b []byte) (n int, err error) {
+	peek, err := p.R.Peek(p.I + len(b))
 	if err != nil {
 		return 0, err
 	}
-	ci := copy(b, peek[p.i:])
-	p.i += ci
+	ci := copy(b, peek[p.I:])
+	p.I += ci
 	return ci, nil
 }
 
