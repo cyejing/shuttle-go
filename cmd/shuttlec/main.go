@@ -6,6 +6,7 @@ import (
 	"github.com/cyejing/shuttle/pkg/codec"
 	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/logger"
+	"github.com/cyejing/shuttle/pkg/utils"
 	"time"
 )
 
@@ -47,7 +48,7 @@ func main() {
 				}()
 				err := wormhole.DialRemote("tcp", c.RemoteAddr)
 				if err != nil {
-					log.Warn("remote conn err", err)
+					log.Warn(utils.BaseErr("remote conn err", err))
 				}
 			}()
 			time.Sleep(time.Second * 5)
