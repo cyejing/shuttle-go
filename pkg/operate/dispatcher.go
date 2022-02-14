@@ -22,14 +22,18 @@ func registerOp(t Type, newOP func() Operate) {
 
 // Dispatcher struct
 type Dispatcher struct {
+	Name     string
 	ReqMap   *sync.Map
+	DialMap  *sync.Map
 	Wormhole *Wormhole
 	Channel  chan Operate
 }
 
-func NewDispatcher(wormhole *Wormhole) *Dispatcher {
+func NewDispatcher(wormhole *Wormhole, name string) *Dispatcher {
 	return &Dispatcher{
+		Name:     name,
 		ReqMap:   &sync.Map{},
+		DialMap:  &sync.Map{},
 		Wormhole: wormhole,
 		Channel:  make(chan Operate, 10),
 	}
@@ -45,16 +49,16 @@ func (d *Dispatcher) Run() error {
 	return d.Read()
 }
 
-func (d *Dispatcher) Exchange() error {
-	d.Send(NewExchangeOP(d.Wormhole.Name, nil))
+func (d *Dispatcher) Connect() error {
+	d.Send(NewConnectOP(d.Name))
 	return d.Run()
 }
 
-func (d *Dispatcher) Send(c Operate) {
-	if !c.IsResponse() {
-		d.ReqMap.Store(c.GetReqId(), c)
+func (d *Dispatcher) Send(o Operate) {
+	if req, ok := o.(ReqOperate); ok {
+		d.ReqMap.Store(req.GetReqBase().reqId, req)
 	}
-	d.Channel <- c
+	d.Channel <- o
 }
 
 func (d *Dispatcher) Dispatch() error {

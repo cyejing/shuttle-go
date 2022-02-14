@@ -14,19 +14,13 @@ import (
 type Type byte
 
 const (
-	ExchangeType Type = iota
+	ConnectType Type = iota
 	DialType
 	RespType
 )
 
+//Operate interface more
 type Operate interface {
-
-	IsResponse() bool
-
-	GetReqId() uint32
-
-	RespCall() func(resp *RespOP)
-
 	Encode(buf *bytes.Buffer) error
 
 	Decode(buf *bufio.Reader) error
@@ -34,11 +28,28 @@ type Operate interface {
 	Execute(ctx context.Context) error
 }
 
+type ReqOperate interface {
+	Operate
+
+	GetReqBase() *ReqBase
+
+	RespCall() func(req *ReqBase, resp *RespOP)
+}
+
+type RespOperate interface {
+	Operate
+
+	GetRespStatus() Status
+}
+
+
+//ReqBase struct
 type ReqBase struct {
 	Type
 	reqId    uint32
 	len      uint32
 	body     []byte
+	respChan chan *RespOP
 }
 
 func (rb *ReqBase) Decode(r io.Reader) error {
@@ -82,13 +93,25 @@ func (rb *ReqBase) Encode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (rb *ReqBase) GetReqBase() *ReqBase {
+	return rb
+}
+
+func (rb *ReqBase) RespCall() func(req *ReqBase, resp *RespOP) {
+	return func (req *ReqBase, resp *RespOP) {
+		log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
+		req.respChan <- resp
+	}
+}
+
+func (rb ReqBase) WaitResp() *RespOP {
+	return <- rb.respChan
+}
+
+//more func
 var iotaReqId uint32 = 0
 
 func newReqId() uint32 {
 	iotaReqId += 1
 	return iotaReqId
-}
-
-func defaultCall(resp *RespOP) {
-	log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
 }

@@ -30,7 +30,6 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 	}
 
 	wormhole := &operate.Wormhole{
-		Name: w.Name,
 		Hash: w.Config.GetHash(),
 		Br:   bufio.NewReader(conn),
 		Rwc:  conn,
@@ -45,7 +44,7 @@ func (w *Wormhole) DialRemote(network, addr string) error {
 		return utils.Err(err)
 	}
 
-	err = operate.NewDispatcher(wormhole).Exchange()
+	err = operate.NewDispatcher(wormhole, w.Name).Connect()
 	if err != nil {
 		return err
 	}

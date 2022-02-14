@@ -10,10 +10,9 @@ import (
 )
 
 type Wormhole struct {
-	Hash    string
-	Name    string
-	Br      *bufio.Reader
-	Rwc     net.Conn
+	Hash string
+	Br   *bufio.Reader
+	Rwc  net.Conn
 }
 
 func (w *Wormhole) Encode() ([]byte, error) {
@@ -37,9 +36,9 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 	if pw := server.WHPasswords[string(hash)]; pw != nil {
 		log.Infof("wormhole %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		wormhole := &Wormhole{
-			Hash:    string(hash),
-			Br:      br,
-			Rwc:     conn,
+			Hash: string(hash),
+			Br:   br,
+			Rwc:  conn,
 		}
 		pr := &codec.PeekReader{R: br}
 		err = wormhole.Decode(pr)
@@ -54,7 +53,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 			return false, nil
 		}
 
-		err := NewDispatcher(wormhole).Run()
+		err := NewDispatcher(wormhole, "").Run()
 		if err != nil {
 			log.Warn(err)
 		}

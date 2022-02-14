@@ -27,54 +27,54 @@ type RespOP struct {
 	Body   []byte
 }
 
-func (rc *RespOP) RespCall() func(resp *RespOP) {
-	return defaultCall
-}
-
 func init() {
 	registerOp(RespType, func() Operate {
 		return new(RespOP)
 	})
 }
 
-func (rc *RespOP) Encode(buf *bytes.Buffer) error {
-	buf.WriteByte(byte(rc.Type))
-	buf.WriteByte(byte(rc.Status))
+func (r *RespOP) GetRespStatus() Status {
+	return r.Status
+}
+
+func (r *RespOP) Encode(buf *bytes.Buffer) error {
+	buf.WriteByte(byte(r.Type))
+	buf.WriteByte(byte(r.Status))
 	reqIdByte := [4]byte{}
-	binary.BigEndian.PutUint32(reqIdByte[:], rc.ReqId)
+	binary.BigEndian.PutUint32(reqIdByte[:], r.ReqId)
 	buf.Write(reqIdByte[:])
 	lenByte := [4]byte{}
-	binary.BigEndian.PutUint32(lenByte[:], rc.Len)
+	binary.BigEndian.PutUint32(lenByte[:], r.Len)
 	buf.Write(lenByte[:])
 
-	buf.Write(rc.Body)
+	buf.Write(r.Body)
 	return nil
 }
 
-func (rc *RespOP) Decode(buf *bufio.Reader) error {
+func (r *RespOP) Decode(buf *bufio.Reader) error {
 	tb, err := codec.ReadByte(buf)
 	if err != nil {
 		return utils.BaseErr("req base decode fail", err)
 	}
-	rc.Type = Type(tb)
+	r.Type = Type(tb)
 
 	statusByte, err := codec.ReadByte(buf)
 	if err != nil {
 		return utils.BaseErr("req base decode fail", err)
 	}
-	rc.Status = Status(statusByte)
+	r.Status = Status(statusByte)
 
 	reqId, err := codec.ReadUint32(buf)
 	if err != nil {
 		return err
 	}
-	rc.ReqId = reqId
+	r.ReqId = reqId
 
 	bodyLen, err := codec.ReadUint32(buf)
 	if err != nil {
 		return err
 	}
-	rc.Len = bodyLen
+	r.Len = bodyLen
 
 	if bodyLen > 0 {
 		body := make([]byte, bodyLen)
@@ -82,37 +82,29 @@ func (rc *RespOP) Decode(buf *bufio.Reader) error {
 		if err != nil {
 			return utils.BaseErr("response command read Body fail", err)
 		}
-		rc.Body = body[:]
+		r.Body = body[:]
 	}
 
 	return nil
 }
 
-func (rc *RespOP) Execute(ctx context.Context) error {
+func (r *RespOP) Execute(ctx context.Context) error {
 	d, err := extractDispatcher(ctx)
 	if err != nil {
 		return err
 	}
-	if r, ok := d.ReqMap.LoadAndDelete(rc.ReqId); ok {
-		if op, ok := r.(Operate); ok {
-			op.RespCall()(rc)
+	if op, ok := d.ReqMap.LoadAndDelete(r.ReqId); ok {
+		if req, ok := op.(ReqOperate); ok {
+			req.RespCall()(req.GetReqBase(), r)
 		}
 	}
 	return nil
 }
 
-func (rc *RespOP) IsResponse() bool {
-	return true
-}
-
-func (rc *RespOP) GetReqId() uint32 {
-	return rc.ReqId
-}
-
 func NewRespOP(s Status, reqId uint32, msg string) *RespOP {
 	buf := bytes.NewBufferString(msg)
 	return &RespOP{
-		Type: RespType,
+		Type:   RespType,
 		Status: s,
 		ReqId:  reqId,
 		Len:    uint32(buf.Len()),

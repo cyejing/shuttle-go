@@ -9,12 +9,10 @@ import (
 	serverC "github.com/cyejing/shuttle/pkg/config/server"
 	"log"
 	"net/http"
-	"net/url"
-	"testing"
 )
 
-func startServer(sf chan int) {
-	c, err := serverC.Load("../example/shuttles.yaml")
+func StartServer(sf chan int, path string) {
+	c, err := serverC.Load(path)
 	if err != nil {
 		return
 	}
@@ -26,8 +24,8 @@ func startServer(sf chan int) {
 	srv.ListenAndServe("127.0.0.1:4880")
 }
 
-func startClient(sf chan int) {
-	config, err := clientC.Load("../example/shuttlec-socks.yaml")
+func StartClient(sf chan int, path string) {
+	config, err := clientC.Load(path)
 	if err != nil {
 		return
 	}
@@ -36,7 +34,7 @@ func startClient(sf chan int) {
 	config.LocalAddr = "127.0.0.1:4080"
 
 	socks5 := &client.Socks5Server{
-		Config: config,
+		Config:   config,
 		DialFunc: codec.DialTrojan,
 	}
 
@@ -44,7 +42,7 @@ func startClient(sf chan int) {
 	socks5.ListenAndServe("tcp", config.LocalAddr)
 }
 
-func startWeb(sf chan int) {
+func StartWeb(sf chan int) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%s %s %s\n", r.Method, r.URL, r.Proto)
 		fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
@@ -65,40 +63,4 @@ func startWeb(sf chan int) {
 
 	sf <- 1
 	http.ListenAndServe("127.0.0.1:8088", nil)
-}
-
-func TestSocksRequest(t *testing.T) {
-	startFinish := make(chan int, 3)
-	go startWeb(startFinish)
-	go startServer(startFinish)
-	go startClient(startFinish)
-
-	for i := 0; i < 3; i++ {
-		<-startFinish
-	}
-
-	request, err := http.NewRequest("GET", "http://127.0.0.1:8088", nil)
-	if err != nil {
-		t.Error("new request fail", err)
-		return
-	}
-
-	cli := &http.Client{
-		Transport: &http.Transport{
-			Proxy: func(_ *http.Request) (*url.URL, error) {
-				return url.Parse("socks5://127.0.0.1:4080")
-			},
-		},
-	}
-	log.Println(cli)
-
-	resp, err := cli.Do(request)
-	if err != nil {
-		t.Error("request do fail", err)
-		return
-	}
-	if resp.StatusCode != 200 {
-		t.Errorf("StatusCode() = %v, want %v", resp.StatusCode, 22)
-		return
-	}
 }
