@@ -4,10 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/hex"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
-	"net"
 )
 
 func init() {
@@ -59,51 +57,4 @@ func (d *DialOP) Execute(ctx context.Context) error {
 	//}
 
 	panic("implement me")
-}
-
-type ConnCtl struct {
-	name       string
-	address    *codec.Address
-	dispatcher *Dispatcher
-
-	raw        net.Conn
-	rbuf       *bufio.Reader
-	writeChan  chan []byte
-}
-
-func (c ConnCtl) Dial() error {
-	conn, err := net.Dial(c.address.Network(), c.address.String())
-	if err != nil {
-		return utils.BaseErrf("dial address {} err", err, c.address.String())
-	}
-	c.raw = conn
-	c.rbuf = bufio.NewReader(conn)
-	c.dispatcher.DialMap.Store(c.name, c)
-	return nil
-}
-
-func (c ConnCtl) Write(b []byte) error {
-	_, err := c.raw.Write(b)
-	if err != nil {
-		return utils.BaseErrf("write conn {} err", err, c.address.String())
-	}
-	return nil
-}
-
-func (c ConnCtl) Read() error {
-	buf := make([]byte,1024)
-	for true {
-		i, err := c.raw.Read(buf)
-		if err != nil {
-			return utils.BaseErrf("connCtl {} read err",err,c.name)
-		}
-		hex.Dump(buf[0:i])
-		//c.dispatcher.Send(ExchangeOP buf)
-	}
-	return nil
-}
-
-func (c ConnCtl) Invalid(msg string) error {
-	//c.dispatcher.Send(InvalidOP msg)
-	return nil
 }

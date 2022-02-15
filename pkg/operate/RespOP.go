@@ -93,10 +93,8 @@ func (r *RespOP) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if op, ok := d.ReqMap.LoadAndDelete(r.ReqId); ok {
-		if req, ok := op.(ReqOperate); ok {
-			req.RespCall()(req.GetReqBase(), r)
-		}
+	if req, ok := d.LoadReq(r.ReqId); ok {
+		req.RespCall()(req.GetReqBase(), r)
 	}
 	return nil
 }

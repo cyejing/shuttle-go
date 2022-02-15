@@ -17,11 +17,15 @@ clean:
 	rm -rf logs
 	rm -f *.zip
 	rm -f *.dat
+	go clean -testcache
 
 test: gotest
 
 gotest:
-	$(GO_DIR)go test -v --cover ./...
+	$(GO_DIR)go test -v --cover ./cmd/...
+	$(GO_DIR)go test -v --cover ./core/...
+	$(GO_DIR)go test -v --cover ./pkg/...
+	$(GO_DIR)go test -v --cover -p 1 ./test/...
 
 shuttles:
 	mkdir -p $(BUILD_DIR)

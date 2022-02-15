@@ -23,23 +23,5 @@ func main() {
 		panic(err)
 	}
 
-	srv := &server.TLSServer{
-		Cert:    c.Cert,
-		Key:     c.Key,
-		Handler: server.NewRouteMux(c),
-	}
-	ec := make(chan error, 2)
-	go func() {
-		err := srv.ListenAndServe(c.Addr)
-		ec <- err
-	}()
-	go func() {
-		err := srv.ListenAndServeTLS(c.SslAddr)
-		ec <- err
-	}()
-
-	for i := 0; i < 2; i++ {
-		e := <-ec
-		logger.NewLog().Error(e)
-	}
+	server.Run(c)
 }

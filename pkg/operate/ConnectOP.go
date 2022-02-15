@@ -44,7 +44,6 @@ func (c *ConnectOp) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	//d.Name = c.name
 	log.Infof("wormhole connect name:%s", c.name)
 
 	d.Send(NewRespOP(SuccessStatus, c.reqId, "ok"))

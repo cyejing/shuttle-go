@@ -2,7 +2,9 @@ package operate
 
 import (
 	"bufio"
+	"context"
 	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/pkg/common"
 	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -53,7 +55,20 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 			return false, nil
 		}
 
-		err := NewDispatcher(wormhole, "").Run()
+		cop := NewConnectOP("")
+		err = cop.Decode(br)
+		if err != nil {
+			return true, err
+		}
+
+		d := NewSerDispatcher(wormhole, cop.name)
+		err = cop.Execute(context.WithValue(context.Background(), common.DispatcherKey, d))
+		if err != nil {
+			return true, err
+		}
+
+		err = d.Run()
+
 		if err != nil {
 			log.Warn(err)
 		}

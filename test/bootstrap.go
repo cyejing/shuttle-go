@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/cyejing/shuttle/core/client"
 	"github.com/cyejing/shuttle/core/server"
-	"github.com/cyejing/shuttle/pkg/codec"
 	clientC "github.com/cyejing/shuttle/pkg/config/client"
 	serverC "github.com/cyejing/shuttle/pkg/config/server"
 	"log"
@@ -16,30 +15,25 @@ func StartServer(sf chan int, path string) {
 	if err != nil {
 		return
 	}
+	c.Addr = "127.0.0.1:4880"
+	c.Cert = "../../example/s.cyejing.cn_chain.crt"
+	c.Key = "../../example/s.cyejing.cn_key.key"
 
-	srv := &server.TLSServer{
-		Handler: server.NewRouteMux(c),
-	}
 	sf <- 1
-	srv.ListenAndServe("127.0.0.1:4880")
+	server.Run(c)
 }
 
-func StartClient(sf chan int, path string) {
-	config, err := clientC.Load(path)
+func StartSocksClient(sf chan int, path string) {
+	c, err := clientC.Load(path)
 	if err != nil {
 		return
 	}
-	config.SSLEnable = false
-	config.RemoteAddr = "127.0.0.1:4880"
-	config.LocalAddr = "127.0.0.1:4080"
-
-	socks5 := &client.Socks5Server{
-		Config:   config,
-		DialFunc: codec.DialTrojan,
-	}
+	c.SSLEnable = false
+	c.RemoteAddr = "127.0.0.1:4880"
+	c.LocalAddr = "127.0.0.1:4080"
 
 	sf <- 1
-	socks5.ListenAndServe("tcp", config.LocalAddr)
+	client.Run(c)
 }
 
 func StartWeb(sf chan int) {

@@ -14,6 +14,25 @@ import (
 
 var log = logger.NewLog()
 
+var dispatcherMap = &sync.Map{}
+
+func GetCliDispatcher(name string) *Dispatcher {
+	return getDispatcher("Cli-" + name)
+}
+
+func GetSerDispatcher(name string) *Dispatcher {
+	return getDispatcher("Ser-" + name)
+}
+
+func getDispatcher(name string) *Dispatcher {
+	if a, ok := dispatcherMap.Load(name); ok {
+		if d, o := a.(*Dispatcher); o {
+			return d
+		}
+	}
+	return nil
+}
+
 var typeMap = make(map[Type]func() Operate)
 
 func registerOp(t Type, newOP func() Operate) {
@@ -22,31 +41,51 @@ func registerOp(t Type, newOP func() Operate) {
 
 // Dispatcher struct
 type Dispatcher struct {
-	Name     string
-	ReqMap   *sync.Map
-	DialMap  *sync.Map
-	Wormhole *Wormhole
-	Channel  chan Operate
+	Name        string
+	Key         string
+	reqMap      *sync.Map
+	exchangeMap *sync.Map
+	Wormhole    *Wormhole
+	Channel     chan Operate
 }
 
-func NewDispatcher(wormhole *Wormhole, name string) *Dispatcher {
-	return &Dispatcher{
-		Name:     name,
-		ReqMap:   &sync.Map{},
-		DialMap:  &sync.Map{},
-		Wormhole: wormhole,
-		Channel:  make(chan Operate, 10),
+func NewCliDispatcher(wormhole *Wormhole, name string) *Dispatcher {
+	return newDispatcher(wormhole, name, "Cli-"+name)
+}
+
+func NewSerDispatcher(wormhole *Wormhole, name string) *Dispatcher {
+	return newDispatcher(wormhole, name, "Ser-"+name)
+}
+
+func newDispatcher(wormhole *Wormhole, name string, key string) *Dispatcher {
+	d := &Dispatcher{
+		Name:        name,
+		Key:         key,
+		reqMap:      &sync.Map{},
+		exchangeMap: &sync.Map{},
+		Wormhole:    wormhole,
+		Channel:     make(chan Operate, 10),
 	}
+	dispatcherMap.Store(key, d)
+	return d
 }
 
 func (d *Dispatcher) Run() error {
+	errChan := make(chan error)
 	go func() {
 		err := d.Dispatch()
-		if err != nil {
-			log.Error(err)
-		}
+		errChan <- err
 	}()
-	return d.Read()
+	go func() {
+		err := d.Read()
+		errChan <- err
+	}()
+	err := <-errChan
+	if err != nil {
+		log.Error(err)
+	}
+	dispatcherMap.Delete(d.Key)
+	return err
 }
 
 func (d *Dispatcher) Connect() error {
@@ -56,7 +95,7 @@ func (d *Dispatcher) Connect() error {
 
 func (d *Dispatcher) Send(o Operate) {
 	if req, ok := o.(ReqOperate); ok {
-		d.ReqMap.Store(req.GetReqBase().reqId, req)
+		d.reqMap.Store(req.GetReqBase().reqId, req)
 	}
 	d.Channel <- o
 }
@@ -104,6 +143,28 @@ func (d *Dispatcher) Read() error {
 			log.Error(utils.BaseErr("command execute err", err))
 		}
 	}
+}
+
+func (d *Dispatcher) LoadReq(reqId uint32) (ReqOperate, bool) {
+	if a, ok := d.reqMap.LoadAndDelete(reqId); ok {
+		if req, o := a.(ReqOperate); o {
+			return req, true
+		}
+	}
+	return nil, false
+}
+
+func (d *Dispatcher) LoadExchange(name string) (ExchangeConn, bool) {
+	if a, ok := d.exchangeMap.Load(name); ok {
+		if ec, o := a.(ExchangeConn); o {
+			return ec, true
+		}
+	}
+	return nil, false
+}
+
+func (d *Dispatcher) DeleteExchange(name string) {
+	d.exchangeMap.Delete(name)
 }
 
 func extractDispatcher(ctx context.Context) (*Dispatcher, error) {
