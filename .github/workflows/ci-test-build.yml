@@ -39,4 +39,4 @@ jobs:
           git diff --exit-code go.mod go.sum
           go mod verify
       - name: Test
-        run: make test build
+        run: make clean test build
