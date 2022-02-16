@@ -20,8 +20,10 @@ func StartServer(sf chan int, path string) {
 	c.Cert = "../../example/s.cyejing.cn_chain.crt"
 	c.Key = "../../example/s.cyejing.cn_key.key"
 
-	time.Sleep(1 * time.Second)
-	sf <- 1
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		sf <- 1
+	}()
 	server.Run(c)
 }
 
@@ -34,7 +36,10 @@ func StartSocksClient(sf chan int, path string) {
 	c.RemoteAddr = "127.0.0.1:4880"
 	c.LocalAddr = "127.0.0.1:4080"
 
-	sf <- 1
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		sf <- 1
+	}()
 	client.Run(c)
 }
 
@@ -57,6 +62,9 @@ func StartWeb(sf chan int) {
 
 	})
 
-	sf <- 1
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		sf <- 1
+	}()
 	http.ListenAndServe("127.0.0.1:8088", nil)
 }
