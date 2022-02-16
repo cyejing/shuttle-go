@@ -44,7 +44,8 @@ func StartSocksClient(sf chan int, path string) {
 }
 
 func StartWeb(sf chan int) {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%s %s %s\n", r.Method, r.URL, r.Proto)
 		fmt.Fprintf(w, "%s %s %s\n", r.Method, r.URL, r.Proto)
 		for k, v := range r.Header {
@@ -60,11 +61,10 @@ func StartWeb(sf chan int) {
 		}
 		fmt.Fprintf(w, "Query = %q\n", r.URL.Query())
 
-	})
-
+	}))
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		sf <- 1
 	}()
-	http.ListenAndServe("127.0.0.1:8088", nil)
+	http.ListenAndServe("127.0.0.1:8088", mux)
 }
