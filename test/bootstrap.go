@@ -20,7 +20,7 @@ func StartServer(sf chan int, path string) {
 	c.Cert = "../../example/s.cyejing.cn_chain.crt"
 	c.Key = "../../example/s.cyejing.cn_key.key"
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	sf <- 1
 	server.Run(c)
 }
