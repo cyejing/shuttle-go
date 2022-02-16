@@ -8,6 +8,7 @@ import (
 	serverC "github.com/cyejing/shuttle/pkg/config/server"
 	"log"
 	"net/http"
+	"time"
 )
 
 func StartServer(sf chan int, path string) {
@@ -19,6 +20,7 @@ func StartServer(sf chan int, path string) {
 	c.Cert = "../../example/s.cyejing.cn_chain.crt"
 	c.Key = "../../example/s.cyejing.cn_key.key"
 
+	time.Sleep(100 * time.Millisecond)
 	sf <- 1
 	server.Run(c)
 }
