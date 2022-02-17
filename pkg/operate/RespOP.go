@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/binary"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -40,12 +39,10 @@ func (r *RespOP) GetRespStatus() Status {
 func (r *RespOP) Encode(buf *bytes.Buffer) error {
 	buf.WriteByte(byte(r.Type))
 	buf.WriteByte(byte(r.Status))
-	reqIdByte := [4]byte{}
-	binary.BigEndian.PutUint32(reqIdByte[:], r.ReqId)
-	buf.Write(reqIdByte[:])
-	lenByte := [4]byte{}
-	binary.BigEndian.PutUint32(lenByte[:], r.Len)
-	buf.Write(lenByte[:])
+	reqIdByte := codec.EncodeUint32(r.ReqId)
+	buf.Write(reqIdByte)
+	lenByte := codec.EncodeUint32(r.Len)
+	buf.Write(lenByte)
 
 	buf.Write(r.Body)
 	return nil

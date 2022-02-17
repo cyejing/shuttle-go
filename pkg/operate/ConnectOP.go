@@ -20,6 +20,13 @@ func init() {
 	})
 }
 
+func NewConnectOP(name string) *ConnectOp {
+	return &ConnectOp{
+		ReqBase: NewReqBase(ConnectType),
+		name:    name,
+	}
+}
+
 func (c *ConnectOp) Encode(buf *bytes.Buffer) error {
 	c.body = []byte(c.name)
 	reqBaseByte, err := c.ReqBase.Encode()
@@ -48,17 +55,4 @@ func (c *ConnectOp) Execute(ctx context.Context) error {
 
 	d.Send(NewRespOP(SuccessStatus, c.reqId, "ok"))
 	return nil
-}
-
-func NewConnectOP(name string) *ConnectOp {
-	nameByte := []byte(name)
-	return &ConnectOp{
-		ReqBase: &ReqBase{
-			Type:  ConnectType,
-			reqId: newReqId(),
-			len:   uint32(len(nameByte)),
-			body:  nameByte,
-		},
-		name: name,
-	}
 }

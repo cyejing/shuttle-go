@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestRespCommand_Decode(t *testing.T) {
+func TestRespOP_codec(t *testing.T) {
 	body := [16]byte{0xa, 0xa, 0xa}
 	rc := &RespOP{
 		Status: SuccessStatus,
@@ -24,17 +24,17 @@ func TestRespCommand_Decode(t *testing.T) {
 	}
 	fmt.Println(hex.Dump(encodeByte.Bytes()))
 
+	rop, _ := typeMap[RespType]().(*RespOP)
 
-	drc := &RespOP{}
-	err = drc.Decode(bufio.NewReader(encodeByte))
+	err = rop.Decode(bufio.NewReader(encodeByte))
 	if err != nil {
 		t.Error(err)
 	}
 
-	assert.Equal(t, SuccessStatus, drc.Status)
-	assert.Equal(t, uint32(8), drc.ReqId)
-	assert.Equal(t, uint32(16), drc.Len)
-	assert.Equal(t, len(body), len(drc.Body))
-	assert.Equal(t, body[:], drc.Body)
-}
+	assert.Equal(t, SuccessStatus, rop.Status)
+	assert.Equal(t, uint32(8), rop.ReqId)
+	assert.Equal(t, uint32(16), rop.Len)
+	assert.Equal(t, len(body), len(rop.Body))
+	assert.Equal(t, body[:], rop.Body)
 
+}

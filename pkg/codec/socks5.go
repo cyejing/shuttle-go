@@ -306,7 +306,7 @@ func (a *Address) WriteTo(w io.Writer) error {
 	return err
 }
 
-func newAddressFromAddr(network string, addr string) (*Address, error) {
+func NewAddressFromAddr(network string, addr string) (*Address, error) {
 	host, portStr, err := net.SplitHostPort(addr)
 	if err != nil {
 		return nil, err
@@ -315,10 +315,10 @@ func newAddressFromAddr(network string, addr string) (*Address, error) {
 	if err != nil {
 		panic(err)
 	}
-	return newAddressFromHostPort(network, host, int(port)), nil
+	return NewAddressFromHostPort(network, host, int(port)), nil
 }
 
-func newAddressFromHostPort(network string, host string, port int) *Address {
+func NewAddressFromHostPort(network string, host string, port int) *Address {
 	if ip := net.ParseIP(host); ip != nil {
 		if ip.To4() != nil {
 			return &Address{

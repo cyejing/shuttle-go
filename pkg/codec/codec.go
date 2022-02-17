@@ -52,3 +52,13 @@ func ReadUint32(r io.Reader) (uint32, error) {
 
 	return binary.BigEndian.Uint32(bytes[:]), nil
 }
+
+func DecodeUint32(uintByte []byte) uint32 {
+	return binary.BigEndian.Uint32(uintByte)
+}
+
+func EncodeUint32(i uint32) []byte {
+	uintByte := [4]byte{}
+	binary.BigEndian.PutUint32(uintByte[:], i)
+	return uintByte[:]
+}

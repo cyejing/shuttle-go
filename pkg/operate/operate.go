@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/binary"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
@@ -15,8 +14,9 @@ type Type byte
 
 const (
 	ConnectType Type = iota
-	DialType
 	RespType
+	DialType
+	ExchangeType
 )
 
 //Operate interface more
@@ -42,7 +42,6 @@ type RespOperate interface {
 	GetRespStatus() Status
 }
 
-
 //ReqBase struct
 type ReqBase struct {
 	Type
@@ -50,6 +49,14 @@ type ReqBase struct {
 	len      uint32
 	body     []byte
 	respChan chan *RespOP
+}
+
+func NewReqBase(t Type) *ReqBase {
+	return &ReqBase{
+		Type:     t,
+		reqId:    newReqId(),
+		respChan: make(chan *RespOP),
+	}
 }
 
 func (rb *ReqBase) Decode(r io.Reader) error {
@@ -82,12 +89,10 @@ func (rb *ReqBase) Decode(r io.Reader) error {
 func (rb *ReqBase) Encode() ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	buf.WriteByte(byte(rb.Type))
-	reqIdByte := [4]byte{}
-	binary.BigEndian.PutUint32(reqIdByte[:], rb.reqId)
-	buf.Write(reqIdByte[:])
-	lenByte := [4]byte{}
-	binary.BigEndian.PutUint32(lenByte[:], rb.len)
-	buf.Write(lenByte[:])
+	reqIdByte := codec.EncodeUint32(rb.reqId)
+	buf.Write(reqIdByte)
+	lenByte := codec.EncodeUint32(uint32(len(rb.body)))
+	buf.Write(lenByte)
 
 	buf.Write(rb.body)
 	return buf.Bytes(), nil
@@ -98,14 +103,14 @@ func (rb *ReqBase) GetReqBase() *ReqBase {
 }
 
 func (rb *ReqBase) RespCall() func(req *ReqBase, resp *RespOP) {
-	return func (req *ReqBase, resp *RespOP) {
+	return func(req *ReqBase, resp *RespOP) {
 		log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
 		req.respChan <- resp
 	}
 }
 
 func (rb ReqBase) WaitResp() *RespOP {
-	return <- rb.respChan
+	return <-rb.respChan
 }
 
 //more func

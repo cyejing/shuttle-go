@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
@@ -16,7 +17,30 @@ type ExchangeOP struct {
 	data    []byte
 }
 
+func init() {
+	registerOp(ExchangeType, func() Operate {
+		return &ExchangeOP{
+			ReqBase: new(ReqBase),
+		}
+	})
+}
+
+func newExchangeOP(name string, data []byte) *ExchangeOP {
+	return &ExchangeOP{
+		ReqBase: NewReqBase(ExchangeType),
+		nameLen: 0,
+		name:    name,
+		data:    data,
+	}
+}
+
 func (e *ExchangeOP) Encode(buf *bytes.Buffer) error {
+	body := bytes.NewBuffer(make([]byte, 0))
+	nameByte := []byte(e.name)
+	body.Write(codec.EncodeUint32(uint32(len(nameByte))))
+	body.Write(nameByte)
+	body.Write(e.data)
+	e.body = body.Bytes()
 	bs, err := e.ReqBase.Encode()
 	if err != nil {
 		return utils.BaseErr("exchange op encode err", err)
@@ -30,6 +54,9 @@ func (e *ExchangeOP) Decode(buf *bufio.Reader) error {
 	if err != nil {
 		return utils.BaseErr("exchange op decode err", err)
 	}
+	e.nameLen = codec.DecodeUint32(e.body[:4])
+	e.name = string(e.body[4 : 4+e.nameLen])
+	e.data = e.body[4+e.nameLen:]
 	return nil
 }
 
@@ -39,44 +66,59 @@ func (e *ExchangeOP) Execute(ctx context.Context) error {
 		return err
 	}
 	if exchangeCtl, ok := d.LoadExchange(e.name); ok {
-		println(exchangeCtl)
+		err := exchangeCtl.Write(e.data)
+		if err != nil {
+			return utils.BaseErr("exchange ctl write data err", err)
+		}
 	}
 	return nil
 }
 
-type ExchangeConn interface {
+type ExchangeCtl interface {
+	Write(b []byte) error
 }
 
-type ExchangeCtl struct {
+type ExchangeCtlStu struct {
 	name       string
 	dispatcher *Dispatcher
 
 	raw net.Conn
 }
 
-func (c *ExchangeCtl) Write(b []byte) error {
+func newExchangeCtl(name string, d *Dispatcher, raw net.Conn) *ExchangeCtlStu {
+	ecs := &ExchangeCtlStu{
+		name:       name,
+		dispatcher: d,
+		raw:        raw,
+	}
+	d.exchangeMap.Store(name, ecs)
+	return ecs
+}
+
+func (c *ExchangeCtlStu) Write(b []byte) error {
 	_, err := c.raw.Write(b)
 	if err != nil {
-		return utils.BaseErrf("write conn {} err", err, c.raw)
+		return utils.BaseErrf("write conn %v err", err, c.raw)
 	}
 	return nil
 }
 
-func (c *ExchangeCtl) Read() error {
+func (c *ExchangeCtlStu) Read() error {
 	buf := make([]byte, 1024)
 	for true {
 		i, err := c.raw.Read(buf)
 		if err != nil {
-			return utils.BaseErrf("connCtl {} read err", err, c.name)
+			return utils.BaseErrf("connCtl %s read err", err, c.name)
 		}
 		hex.Dump(buf[0:i])
-		//c.dispatcher.Send(ExchangeOP buf)
+		c.dispatcher.Send(newExchangeOP(c.name, buf[0:i]))
 	}
 	return nil
 }
 
-func (c *ExchangeCtl) Invalid(msg string) error {
+func (c *ExchangeCtlStu) Invalid(msg string) error {
 	c.dispatcher.DeleteExchange(c.name)
-	//c.dispatcher.Send(InvalidOP msg)
+	log.Warnf("exchange ctl stu invalid name:%s, msg:%s", c.name, msg)
+	//c.dispatcher.Send(InvalidOP msg) TODO
 	return nil
 }

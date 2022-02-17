@@ -154,9 +154,9 @@ func (d *Dispatcher) LoadReq(reqId uint32) (ReqOperate, bool) {
 	return nil, false
 }
 
-func (d *Dispatcher) LoadExchange(name string) (ExchangeConn, bool) {
+func (d *Dispatcher) LoadExchange(name string) (ExchangeCtl, bool) {
 	if a, ok := d.exchangeMap.Load(name); ok {
-		if ec, o := a.(ExchangeConn); o {
+		if ec, o := a.(ExchangeCtl); o {
 			return ec, true
 		}
 	}
