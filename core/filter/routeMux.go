@@ -1,16 +1,12 @@
-package server
+package filter
 
 import (
 	"errors"
-	"github.com/cyejing/shuttle/core/filter"
 	config "github.com/cyejing/shuttle/pkg/config/server"
-	"github.com/cyejing/shuttle/pkg/logger"
 	"net/http"
 	"regexp"
 	"sort"
 )
-
-var log = logger.NewLog()
 
 //RouteMux struct
 type RouteMux struct {
@@ -21,11 +17,11 @@ type RouteMux struct {
 func NewRouteMux(c *config.Config) *RouteMux {
 	routeMux := &RouteMux{Routes: c.Gateway.Routes}
 
+	Init(routeMux)
+
 	sort.Slice(routeMux.Routes, func(i, j int) bool {
 		return routeMux.Routes[i].Order > routeMux.Routes[j].Order
 	})
-
-	filter.Init()
 
 	return routeMux
 }
@@ -40,7 +36,7 @@ func (r RouteMux) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		log.Debugf("match route %s", route.ID)
 	}
 
-	filter.NewChain(resp, req, route).DoFilter()
+	NewChain(resp, req, route).DoFilter()
 }
 
 func matchRoute(routes []config.Route, req *http.Request) (route config.Route, err error) { //copy Route

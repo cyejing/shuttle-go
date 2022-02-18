@@ -49,6 +49,7 @@ type ReqBase struct {
 	len      uint32
 	body     []byte
 	respChan chan *RespOP
+	respCall func(req *ReqBase, resp *RespOP)
 }
 
 func NewReqBase(t Type) *ReqBase {
@@ -103,14 +104,23 @@ func (rb *ReqBase) GetReqBase() *ReqBase {
 }
 
 func (rb *ReqBase) RespCall() func(req *ReqBase, resp *RespOP) {
-	return func(req *ReqBase, resp *RespOP) {
-		log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
-		req.respChan <- resp
+	if rb.respCall == nil {
+		return defaultRespCall
+	} else {
+		return rb.respCall
 	}
 }
 
 func (rb ReqBase) WaitResp() *RespOP {
+	rb.respCall = func(req *ReqBase, resp *RespOP) {
+		defaultRespCall(req, resp)
+		req.respChan <- resp
+	}
 	return <-rb.respChan
+}
+
+func defaultRespCall(req *ReqBase, resp *RespOP) {
+	log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
 }
 
 //more func

@@ -1,16 +1,18 @@
 package server
 
 import (
+	"github.com/cyejing/shuttle/core/filter"
 	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/logger"
 )
 
+var log = logger.NewLog()
 
 func Run(c *config.Config) {
 	srv := &TLSServer{
 		Cert:    c.Cert,
 		Key:     c.Key,
-		Handler: NewRouteMux(c),
+		Handler: filter.NewRouteMux(c),
 	}
 	ec := make(chan error, 2)
 	go func() {
@@ -22,9 +24,8 @@ func Run(c *config.Config) {
 		ec <- err
 	}()
 
-	for i := 0; i < 2; i++ {
-		e := <-ec
-		logger.NewLog().Error(e)
-	}
+	e := <-ec
+	logger.NewLog().Error(e)
+	log.Infof("server exit")
 }
 

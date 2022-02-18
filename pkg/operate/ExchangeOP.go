@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/hex"
 	"github.com/cyejing/shuttle/pkg/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
@@ -85,7 +84,7 @@ type ExchangeCtlStu struct {
 	raw net.Conn
 }
 
-func newExchangeCtl(name string, d *Dispatcher, raw net.Conn) *ExchangeCtlStu {
+func NewExchangeCtl(name string, d *Dispatcher, raw net.Conn) *ExchangeCtlStu {
 	ecs := &ExchangeCtlStu{
 		name:       name,
 		dispatcher: d,
@@ -104,14 +103,15 @@ func (c *ExchangeCtlStu) Write(b []byte) error {
 }
 
 func (c *ExchangeCtlStu) Read() error {
-	buf := make([]byte, 1024)
 	for true {
+		// send OP, cannot reuse buf
+		buf := make([]byte, 1024 * 2)
 		i, err := c.raw.Read(buf)
 		if err != nil {
 			return utils.BaseErrf("connCtl %s read err", err, c.name)
 		}
-		hex.Dump(buf[0:i])
-		c.dispatcher.Send(newExchangeOP(c.name, buf[0:i]))
+		op := newExchangeOP(c.name, buf[0:i])
+		c.dispatcher.Send(op)
 	}
 	return nil
 }

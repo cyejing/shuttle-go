@@ -38,6 +38,7 @@ func Run(c *config.Config) {
 			log.Infof("repeat dial remote %s", c.RemoteAddr)
 		}
 	}
+	log.Infof("client exit")
 }
 
 func DialRemote(c *config.Config) error {

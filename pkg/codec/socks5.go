@@ -209,6 +209,9 @@ func (a *Address) String() string {
 }
 
 func (a *Address) Network() string {
+	if a.NetworkType == "" {
+		return "tcp"
+	}
 	return a.NetworkType
 }
 

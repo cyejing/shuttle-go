@@ -18,7 +18,7 @@ type RewriteConfig struct {
 	Replacement string
 }
 
-func (r rewrite) Init() {
+func (r rewrite) Init(mux *RouteMux) {
 }
 
 func (r rewrite) Name() string {

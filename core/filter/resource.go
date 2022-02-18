@@ -19,7 +19,7 @@ type ResourceConfig struct {
 	Root string
 }
 
-func (r resource) Init() {
+func (r resource) Init(mux *RouteMux) {
 
 }
 

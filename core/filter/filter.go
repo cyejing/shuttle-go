@@ -13,7 +13,7 @@ var log = logger.NewLog()
 
 // Filter interface
 type Filter interface {
-	Init()
+	Init(mux *RouteMux)
 	Name() string
 	Filter(exchange *Exchange, c interface{}) error
 }
@@ -51,9 +51,9 @@ func RegistryFilter(filter Filter) {
 }
 
 // Init filter
-func Init() {
+func Init(mux *RouteMux) {
 	for _, filter := range registryFilters {
-		filter.Init()
+		filter.Init(mux)
 	}
 }
 

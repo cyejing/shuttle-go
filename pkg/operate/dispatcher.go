@@ -3,8 +3,6 @@ package operate
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
-	"fmt"
 	"github.com/cyejing/shuttle/pkg/common"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
@@ -110,7 +108,6 @@ func (d *Dispatcher) Dispatch() error {
 			if err != nil {
 				log.Error(utils.BaseErr("command encode err", err))
 			}
-			fmt.Println(hex.Dump(buf.Bytes()))
 			_, err = d.Wormhole.Rwc.Write(buf.Bytes())
 			if err != nil {
 				return utils.BaseErr("handle ReqBase write byte fail", err)

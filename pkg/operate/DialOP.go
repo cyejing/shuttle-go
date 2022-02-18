@@ -77,7 +77,7 @@ func (d *DialOP) Execute(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	ec := newExchangeCtl(d.name, dispatcher, conn)
+	ec := NewExchangeCtl(d.name, dispatcher, conn)
 	go func() {
 		err := ec.Read()
 		if err != nil {

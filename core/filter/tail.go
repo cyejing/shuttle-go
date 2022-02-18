@@ -9,11 +9,11 @@ type tail struct {
 	name string
 }
 
-func (t tail) Init() {
-}
-
 func init() {
 	RegistryFilter(&tail{name: "tail"})
+}
+
+func (t tail) Init(mux *RouteMux) {
 }
 
 func (t tail) Name() string {

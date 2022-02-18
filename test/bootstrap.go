@@ -6,7 +6,9 @@ import (
 	"github.com/cyejing/shuttle/core/server"
 	clientC "github.com/cyejing/shuttle/pkg/config/client"
 	serverC "github.com/cyejing/shuttle/pkg/config/server"
+	"io"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -67,4 +69,27 @@ func StartWeb(sf chan int) {
 		sf <- 1
 	}()
 	http.ListenAndServe("127.0.0.1:8088", mux)
+}
+
+func StartEcho(sf chan int) {
+	server, err := net.Listen("tcp", "127.0.0.1:5010")
+	if err != nil {
+		return
+	}
+	sf <- 1
+	for true {
+		conn, err := server.Accept()
+		if err != nil {
+			log.Printf("accept conn err %v \n", err)
+		}
+
+		go func() {
+			defer conn.Close()
+			_, err := io.Copy(conn, conn)
+			if err != nil {
+				return
+			}
+		}()
+	}
+	return
 }

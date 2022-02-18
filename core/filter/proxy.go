@@ -25,7 +25,7 @@ func (p proxy) Name() string {
 	return p.name
 }
 
-func (p proxy) Init() {
+func (p proxy) Init(mux *RouteMux) {
 }
 
 func (p proxy) Filter(exchange *Exchange, c interface{}) error {
