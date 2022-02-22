@@ -19,7 +19,7 @@ type Config struct {
 	LogFile   string `yaml:"logFile"`
 	Gateway   Gateway
 	Instances []Instance
-	Trojan  Trojan
+	Trojan    Trojan
 	Wormhole  Wormhole
 }
 
@@ -81,7 +81,6 @@ type Password struct {
 	Hash string
 }
 
-
 // config var
 var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
@@ -126,6 +125,11 @@ func initPasswords() {
 		Passwords[hash] = &Password{
 			Raw:  raw,
 			Hash: hash,
+		}
+		hash2 := utils.SHA224String(raw)
+		Passwords[hash2] = &Password{
+			Raw:  raw,
+			Hash: hash2,
 		}
 	}
 	for _, raw := range GlobalConfig.Wormhole.Passwords {
