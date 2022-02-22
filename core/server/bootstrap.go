@@ -19,10 +19,12 @@ func Run(c *config.Config) {
 		err := srv.ListenAndServe(c.Addr)
 		ec <- err
 	}()
-	go func() {
-		err := srv.ListenAndServeTLS(c.SslAddr)
-		ec <- err
-	}()
+	if srv.Cert!="" && srv.Key!= "" {
+		go func() {
+			err := srv.ListenAndServeTLS(c.SslAddr)
+			ec <- err
+		}()
+	}
 
 	e := <-ec
 	logger.NewLog().Error(e)

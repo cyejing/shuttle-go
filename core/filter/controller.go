@@ -1,8 +1,8 @@
 package filter
 
 import (
-	controller2 "github.com/cyejing/shuttle/core/controller"
 	"github.com/cyejing/shuttle/pkg/config/server"
+	"github.com/cyejing/shuttle/pkg/operate"
 )
 
 type controller struct {
@@ -45,14 +45,8 @@ func (s controller) Filter(exchange *Exchange, c interface{}) error {
 		localAddr := exchange.Req.FormValue("localAddr")
 		if wormholeName == "" || shipName == "" || remoteAddr == "" || localAddr == "" {
 			println("error params")
-		}else{
-			println(wormholeName,shipName,remoteAddr,localAddr)
-			go func() {
-				err := controller2.NewProxyCtl(wormholeName, shipName, remoteAddr, localAddr).Run()
-				if err != nil {
-					log.Errorln(err)
-				}
-			}()
+		} else {
+			return operate.NewProxyCtl(wormholeName, shipName, remoteAddr, localAddr).Run()
 		}
 	default:
 		log.Infof("controller no impl path %s", path)

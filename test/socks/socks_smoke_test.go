@@ -15,9 +15,9 @@ func setup() {
 	startFinish := make(chan int, 3)
 	go test.StartWeb(startFinish)
 	<-startFinish
-	go test.StartServer(startFinish,"../../example/shuttles.yaml")
+	go test.StartServer(startFinish,"../config/shuttles.yaml")
 	<-startFinish
-	go test.StartSocksClient(startFinish,"../../example/shuttlec-socks.yaml")
+	go test.StartSocksClient(startFinish,"../config/shuttlec-socks.yaml")
 	<-startFinish
 }
 

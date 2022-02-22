@@ -17,6 +17,7 @@ const (
 	RespType
 	DialType
 	ExchangeType
+	OpenProxyType
 )
 
 //Operate interface more
@@ -34,6 +35,8 @@ type ReqOperate interface {
 	GetReqBase() *ReqBase
 
 	RespCall() func(req *ReqBase, resp *RespOP)
+
+	WaitResp() *RespOP
 }
 
 type RespOperate interface {
@@ -105,7 +108,7 @@ func (rb *ReqBase) GetReqBase() *ReqBase {
 
 func (rb *ReqBase) RespCall() func(req *ReqBase, resp *RespOP) {
 	if rb.respCall == nil {
-		return defaultRespCall
+		return func(req *ReqBase, resp *RespOP) {}
 	} else {
 		return rb.respCall
 	}
@@ -113,14 +116,9 @@ func (rb *ReqBase) RespCall() func(req *ReqBase, resp *RespOP) {
 
 func (rb ReqBase) WaitResp() *RespOP {
 	rb.respCall = func(req *ReqBase, resp *RespOP) {
-		defaultRespCall(req, resp)
 		req.respChan <- resp
 	}
 	return <-rb.respChan
-}
-
-func defaultRespCall(req *ReqBase, resp *RespOP) {
-	log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
 }
 
 //more func

@@ -11,7 +11,7 @@ import (
 
 func TestExchangeOPCodec(t *testing.T) {
 	data := []byte{0xa, 0xa, 0xa}
-	exchangeOP := newExchangeOP("test", data)
+	exchangeOP := NewExchangeOP("test", data)
 
 	encodeByte := bytes.NewBuffer([]byte{})
 

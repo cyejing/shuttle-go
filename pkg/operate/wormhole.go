@@ -70,7 +70,11 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		err = d.Run()
 
 		if err != nil {
-			log.Warn(err)
+			if err == io.EOF {
+				log.Infof("name[%s] client close, remote[%v]", d.Name, conn.RemoteAddr())
+			} else {
+				log.Warn(utils.BaseErr("wormhole conn err", err))
+			}
 		}
 
 		return true, nil

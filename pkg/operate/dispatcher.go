@@ -79,15 +79,19 @@ func (d *Dispatcher) Run() error {
 		errChan <- err
 	}()
 	err := <-errChan
-	if err != nil {
-		log.Error(err)
-	}
 	dispatcherMap.Delete(d.Key)
 	return err
 }
 
 func (d *Dispatcher) Connect() error {
-	d.Send(NewConnectOP(d.Name))
+	connectOP := NewConnectOP(d.Name)
+	connectOP.respCall = func(req *ReqBase, resp *RespOP) {
+		err := scanProxyConfig(d)
+		if err != nil {
+			log.Error(err)
+		}
+	}
+	d.Send(connectOP)
 	return d.Run()
 }
 
@@ -96,6 +100,11 @@ func (d *Dispatcher) Send(o Operate) {
 		d.reqMap.Store(req.GetReqBase().reqId, req)
 	}
 	d.Channel <- o
+}
+func (d *Dispatcher) SendAndWait(req ReqOperate) *RespOP {
+	d.reqMap.Store(req.GetReqBase().reqId, req)
+	d.Channel <- req
+	return req.WaitResp()
 }
 
 func (d *Dispatcher) Dispatch() error {
@@ -130,6 +139,7 @@ func (d *Dispatcher) Read() error {
 			log.Error(utils.NewErrf("unknow type op: %v", t))
 		}
 		op := newOp()
+		log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(),d.Wormhole.Rwc.RemoteAddr())
 
 		err = op.Decode(buf)
 		if err != nil {

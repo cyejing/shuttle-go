@@ -8,6 +8,7 @@ import (
 	config "github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/operate"
 	"github.com/cyejing/shuttle/pkg/utils"
+	"io"
 	"net"
 	"time"
 )
@@ -19,9 +20,8 @@ func Run(c *config.Config) {
 			Config:   c,
 			DialFunc: codec.DialTrojan,
 		}
-		panic(socks5.ListenAndServe("tcp", c.LocalAddr))
+		panic(socks5.ListenAndServe("tcp", c.SockAddr))
 	case "wormhole":
-
 		for {
 			func() {
 				defer func() {
@@ -31,7 +31,11 @@ func Run(c *config.Config) {
 				}()
 				err := DialRemote(c)
 				if err != nil {
-					log.Warn(utils.BaseErr("remote conn err", err))
+					if err == io.EOF {
+						log.Info("remote conn close, reconnect later")
+					}else{
+						log.Error(utils.BaseErr("remote conn err", err))
+					}
 				}
 			}()
 			time.Sleep(time.Second * 5)

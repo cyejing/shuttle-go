@@ -18,9 +18,6 @@ func StartServer(sf chan int, path string) {
 	if err != nil {
 		return
 	}
-	c.Addr = "127.0.0.1:4880"
-	c.Cert = "../../example/s.cyejing.cn_chain.crt"
-	c.Key = "../../example/s.cyejing.cn_key.key"
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)
@@ -34,9 +31,6 @@ func StartSocksClient(sf chan int, path string) {
 	if err != nil {
 		return
 	}
-	c.SSLEnable = false
-	c.RemoteAddr = "127.0.0.1:4880"
-	c.LocalAddr = "127.0.0.1:4080"
 
 	go func() {
 		time.Sleep(100 * time.Millisecond)

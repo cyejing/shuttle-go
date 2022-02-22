@@ -91,9 +91,14 @@ func (r *RespOP) Execute(ctx context.Context) error {
 		return err
 	}
 	if req, ok := d.LoadReq(r.ReqId); ok {
+		logRespCall(req.GetReqBase(), r)
 		req.RespCall()(req.GetReqBase(), r)
 	}
 	return nil
+}
+
+func logRespCall(req *ReqBase, resp *RespOP) {
+	log.Debugf("reqId %v have response Status:%v msg:%s", resp.ReqId, resp.Status, string(resp.Body))
 }
 
 func NewRespOP(s Status, reqId uint32, msg string) *RespOP {

@@ -24,7 +24,7 @@ func init() {
 	})
 }
 
-func newExchangeOP(name string, data []byte) *ExchangeOP {
+func NewExchangeOP(name string, data []byte) *ExchangeOP {
 	return &ExchangeOP{
 		ReqBase: NewReqBase(ExchangeType),
 		nameLen: 0,
@@ -105,12 +105,12 @@ func (c *ExchangeCtlStu) Write(b []byte) error {
 func (c *ExchangeCtlStu) Read() error {
 	for true {
 		// send OP, cannot reuse buf
-		buf := make([]byte, 1024 * 2)
+		buf := make([]byte, 1024 * 4)
 		i, err := c.raw.Read(buf)
 		if err != nil {
 			return utils.BaseErrf("connCtl %s read err", err, c.name)
 		}
-		op := newExchangeOP(c.name, buf[0:i])
+		op := NewExchangeOP(c.name, buf[0:i])
 		c.dispatcher.Send(op)
 	}
 	return nil

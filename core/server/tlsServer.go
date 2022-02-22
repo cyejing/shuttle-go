@@ -83,7 +83,7 @@ func (s *TLSServer) Server(ln net.Listener) error {
 			err := c.handle()
 			if err != nil {
 				if err != io.EOF {
-					log.Error("tls server handle conn fail :", err)
+					log.Error("server handle conn fail :", err)
 				}
 				return
 			}

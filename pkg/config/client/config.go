@@ -14,11 +14,19 @@ var log = logger.NewLog()
 type Config struct {
 	RunType    string `yaml:"runType"`
 	Name       string `yaml:"name"`
-	LocalAddr  string `yaml:"localAddr"`
+	SockAddr   string `yaml:"sockAddr"`
 	RemoteAddr string `yaml:"remoteAddr"`
 	SSLEnable  bool   `yaml:"sslEnable"`
 	Password   string `yaml:"password"`
 	LogFile    string `yaml:"logFile"`
+
+	Ships []Ship
+}
+
+type Ship struct {
+	Name string
+	RemoteAddr string `yaml:"remoteAddr"`
+	LocalAddr string `yaml:"localAddr"`
 }
 
 //global config
@@ -30,7 +38,7 @@ var (
 		"example/shuttlec-wormhole.yaml",
 	}
 	GlobalConfig = &Config{
-		LocalAddr: "127.0.0.1:1080",
+		SockAddr:  "127.0.0.1:1080",
 		LogFile:   "logs/shuttlec.log",
 		SSLEnable: true,
 	}

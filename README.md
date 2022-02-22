@@ -49,6 +49,39 @@ password: sQtfRnfhcNoZYZh1wY9u #对应服务器密码
 #### 浏览器设置socks5代理
 Enjoy
 
+### Wormhole穿透使用
+#### Start Server
+``./shuttles -c example/shuttles.yaml``
+
+配置参数
+```yaml
+#example/shuttles.yaml
+addr: 127.0.0.1:4880  #http端口
+wormhole:
+  passwords:
+    - 58JCEmvcBkRAk1XkK1iH
+```
+#### Start Client
+``./shuttlec -c example/shuttlec-wormhole.yaml``
+
+配置参数
+```yaml
+runType: wormhole
+name: unique-name
+sslEnable: false
+remoteAddr: 127.0.0.1:4880
+password: 58JCEmvcBkRAk1XkK1iH
+
+ships:
+  - name: test
+    remoteAddr: 127.0.0.1:4022
+    localAddr: 127.0.0.1:22
+
+```
+
+#### Enjoy Internet
+tcp-ship -> remoteAddr -> localAddr
+
 ### Route代理使用
 #### Start Server
 ``./shuttles -c example/shuttles.yaml``
