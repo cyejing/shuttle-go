@@ -8,6 +8,7 @@ import (
 	"github.com/cyejing/shuttle/pkg/config/client"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
+	"strings"
 )
 
 type OpenProxy struct {
@@ -95,10 +96,10 @@ func (o *OpenProxy) Execute(ctx context.Context) error {
 		return err
 	}
 	go func() {
-		err := NewProxyCtl(dispatcher.Name, o.ShipName, o.RemoteAddr, o.LocalAddr).Run()
+		err := NewProxyCtl(dispatcher, o.ShipName, o.RemoteAddr, o.LocalAddr).Run()
 		if err != nil {
-			dispatcher.Send(NewRespOP(FailStatus, o.reqId, utils.BaseErr("new proxy ctl err",err).Error()))
-		}else{
+			dispatcher.Send(NewRespOP(FailStatus, o.reqId, utils.BaseErr("new proxy ctl err", err).Error()))
+		} else {
 			dispatcher.Send(NewRespOP(SuccessStatus, o.reqId, "ok"))
 		}
 	}()
@@ -106,19 +107,26 @@ func (o *OpenProxy) Execute(ctx context.Context) error {
 }
 
 type ProxyCtl struct {
-	WormholeName string
-	ShipName     string
-	RemoteAddr   string
-	LocalAddr    string
+	dispatcher *Dispatcher
+	ShipName   string
+	RemoteAddr string
+	LocalAddr  string
+	ctx        context.Context
+	stopFunc   context.CancelFunc
 }
 
-func NewProxyCtl(wormholeName, shipName, remoteAddr, localAddr string) *ProxyCtl {
-	return &ProxyCtl{
-		WormholeName: wormholeName,
-		ShipName:     shipName,
-		RemoteAddr:   remoteAddr,
-		LocalAddr:    localAddr,
+func NewProxyCtl(dispatcher *Dispatcher, shipName, remoteAddr, localAddr string) *ProxyCtl {
+	ctx, stopFunc := context.WithCancel(context.Background())
+	proxyCtl := &ProxyCtl{
+		dispatcher: dispatcher,
+		ShipName:   shipName,
+		RemoteAddr: remoteAddr,
+		LocalAddr:  localAddr,
+		ctx:        ctx,
+		stopFunc:   stopFunc,
 	}
+	dispatcher.proxyMap.Store(shipName, proxyCtl)
+	return proxyCtl
 }
 
 func (p *ProxyCtl) Run() error {
@@ -126,47 +134,54 @@ func (p *ProxyCtl) Run() error {
 	go func() {
 		errChan <- p.run()
 	}()
-	return <- errChan
+	return <-errChan
+}
+
+func (p *ProxyCtl) Stop() {
+	p.stopFunc()
 }
 
 func (p *ProxyCtl) run() error {
-	dispatcher := GetSerDispatcher(p.WormholeName)
-	if dispatcher == nil {
-		return utils.NewErrf("wormholeName %s does not exist", p.WormholeName)
-	}
 	ln, err := net.Listen("tcp", p.RemoteAddr)
-	log.Infof("proxy listen at %s", p.RemoteAddr)
+	log.Infof("proxy [%s] listen at %s", p.ShipName, p.RemoteAddr)
 	if err != nil {
-		return utils.BaseErr("proxy server ctl listen err",err)
+		return utils.BaseErr("proxy server ctl listen err", err)
 	}
 	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Errorln("proxy accept conn fail", err)
-		}
-
+		connChan := make(chan net.Conn)
 		go func() {
-			defer conn.Close()
-			err := p.serveConn(conn)
+			conn, err := ln.Accept()
 			if err != nil {
-				log.Errorln(utils.BaseErr("handle proxy fail", err))
-				return
+				if !strings.Contains(err.Error(), "use of closed network connection") {
+					log.Errorln("proxy accept conn fail", err)
+				}
 			}
+			connChan <- conn
 		}()
-
+		select {
+		case <-p.ctx.Done():
+			log.Infof("proxy [%s] server stop, remote[%s]", p.ShipName, p.RemoteAddr)
+			ln.Close()
+			return nil
+		case conn := <-connChan:
+			go func() {
+				defer conn.Close()
+				err := p.serveConn(conn)
+				if err != nil {
+					log.Errorln(utils.BaseErr("handle proxy fail", err))
+					return
+				}
+			}()
+		}
 	}
 }
 
 func (p *ProxyCtl) serveConn(conn net.Conn) error {
-	dispatcher := GetSerDispatcher(p.WormholeName)
-	if dispatcher == nil {
-		return utils.NewErrf("wormholeName %s does not exist", p.WormholeName)
-	}
-	exchangeCtl := NewExchangeCtl(p.ShipName, dispatcher, conn)
+	exchangeCtl := NewExchangeCtl(p.ShipName, p.dispatcher, conn)
 	addr, err := codec.NewAddressFromAddr("tcp", p.LocalAddr)
 	if err != nil {
 		return err
 	}
-	dispatcher.Send(NewDialOP(p.ShipName, addr))
+	p.dispatcher.Send(NewDialOP(p.ShipName, addr))
 	return exchangeCtl.Read()
 }

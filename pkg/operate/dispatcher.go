@@ -43,6 +43,7 @@ type Dispatcher struct {
 	Key         string
 	reqMap      *sync.Map
 	exchangeMap *sync.Map
+	proxyMap    *sync.Map
 	Wormhole    *Wormhole
 	Channel     chan Operate
 }
@@ -61,6 +62,7 @@ func newDispatcher(wormhole *Wormhole, name string, key string) *Dispatcher {
 		Key:         key,
 		reqMap:      &sync.Map{},
 		exchangeMap: &sync.Map{},
+		proxyMap:    &sync.Map{},
 		Wormhole:    wormhole,
 		Channel:     make(chan Operate, 10),
 	}
@@ -79,7 +81,8 @@ func (d *Dispatcher) Run() error {
 		errChan <- err
 	}()
 	err := <-errChan
-	dispatcherMap.Delete(d.Key)
+
+	d.clean()
 	return err
 }
 
@@ -139,7 +142,7 @@ func (d *Dispatcher) Read() error {
 			log.Error(utils.NewErrf("unknow type op: %v", t))
 		}
 		op := newOp()
-		log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(),d.Wormhole.Rwc.RemoteAddr())
+		log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(), d.Wormhole.Rwc.RemoteAddr())
 
 		err = op.Decode(buf)
 		if err != nil {
@@ -172,6 +175,16 @@ func (d *Dispatcher) LoadExchange(name string) (ExchangeCtl, bool) {
 
 func (d *Dispatcher) DeleteExchange(name string) {
 	d.exchangeMap.Delete(name)
+}
+
+func (d *Dispatcher) clean() {
+	dispatcherMap.Delete(d.Key)
+	d.proxyMap.Range(func(key, value interface{}) bool {
+		if p, ok := value.(*ProxyCtl); ok {
+			p.Stop()
+		}
+		return true
+	})
 }
 
 func extractDispatcher(ctx context.Context) (*Dispatcher, error) {

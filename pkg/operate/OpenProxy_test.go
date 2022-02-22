@@ -20,7 +20,7 @@ func TestOpenProxy_Codec(t *testing.T) {
 
 	fmt.Println(hex.Dump(encodeByte.Bytes()))
 
-	pop:=typeMap[OpenProxyType]().(*OpenProxy)
+	pop := typeMap[OpenProxyType]().(*OpenProxy)
 
 	err = pop.Decode(bufio.NewReader(encodeByte))
 
@@ -30,5 +30,18 @@ func TestOpenProxy_Codec(t *testing.T) {
 	assert.Equal(t, "test", pop.ShipName)
 	assert.Equal(t, "127.0.0.1:2121", pop.RemoteAddr)
 	assert.Equal(t, "127.0.0.1:2122", pop.LocalAddr)
+
+}
+
+func TestProxyStop(t *testing.T) {
+	d := NewSerDispatcher(&Wormhole{Hash: "hello"}, "test")
+	println(d)
+	proxyCtl := NewProxyCtl(d, "test", "127.0.0.1:2121", "127.0.0.1:2122")
+	proxyCtl.Stop()
+
+	err := proxyCtl.Run()
+	if err != nil {
+		t.Error(err)
+	}
 
 }

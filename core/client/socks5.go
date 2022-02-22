@@ -54,7 +54,7 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	outbound, err := s.DialFunc(s.Config, socks5.Metadata)
 	if err != nil {
-		return utils.BaseErrf("socks5 dial remote fail %v", err, outbound.RemoteAddr())
+		return utils.BaseErrf("socks5 dial remote fail %v", err, outbound)
 	}
 	defer outbound.Close()
 

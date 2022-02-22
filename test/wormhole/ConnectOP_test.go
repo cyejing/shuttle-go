@@ -20,7 +20,6 @@ func setup() {
 	<-startFinish
 	go test.StartEcho(startFinish)
 	<-startFinish
-	go operate.NewProxyCtl("unique-name", "test", "127.0.0.1:4081", "127.0.0.1:5010").Run()
 
 	time.Sleep(1 * time.Second)
 }

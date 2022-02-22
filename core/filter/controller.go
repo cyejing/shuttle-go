@@ -3,6 +3,7 @@ package filter
 import (
 	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/operate"
+	"github.com/cyejing/shuttle/pkg/utils"
 )
 
 type controller struct {
@@ -46,7 +47,11 @@ func (s controller) Filter(exchange *Exchange, c interface{}) error {
 		if wormholeName == "" || shipName == "" || remoteAddr == "" || localAddr == "" {
 			println("error params")
 		} else {
-			return operate.NewProxyCtl(wormholeName, shipName, remoteAddr, localAddr).Run()
+			dispatcher := operate.GetSerDispatcher(wormholeName)
+			if dispatcher == nil {
+				return utils.NewErrf("wormholeName %s does not exist", wormholeName)
+			}
+			return operate.NewProxyCtl(dispatcher, shipName, remoteAddr, localAddr).Run()
 		}
 	default:
 		log.Infof("controller no impl path %s", path)

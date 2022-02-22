@@ -116,9 +116,8 @@ func (c *ExchangeCtlStu) Read() error {
 	return nil
 }
 
-func (c *ExchangeCtlStu) Invalid(msg string) error {
+func (c *ExchangeCtlStu) Invalid(msg string) {
 	c.dispatcher.DeleteExchange(c.name)
 	log.Warnf("exchange ctl stu invalid name:%s, msg:%s", c.name, msg)
 	//c.dispatcher.Send(InvalidOP msg) TODO
-	return nil
 }
