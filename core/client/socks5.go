@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/cyejing/shuttle/pkg/codec"
-	"github.com/cyejing/shuttle/pkg/config/client"
+	"github.com/cyejing/shuttle/core/codec"
+	"github.com/cyejing/shuttle/core/config/client"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/core/codec"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

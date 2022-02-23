@@ -12,7 +12,7 @@ import (
 
 var log = logger.NewLog()
 
-var dispatcherMap = &sync.Map{}
+var DispatcherMap = &sync.Map{}
 
 func GetCliDispatcher(name string) *Dispatcher {
 	return getDispatcher("Cli-" + name)
@@ -23,7 +23,7 @@ func GetSerDispatcher(name string) *Dispatcher {
 }
 
 func getDispatcher(name string) *Dispatcher {
-	if a, ok := dispatcherMap.Load(name); ok {
+	if a, ok := DispatcherMap.Load(name); ok {
 		if d, o := a.(*Dispatcher); o {
 			return d
 		}
@@ -43,7 +43,7 @@ type Dispatcher struct {
 	Key         string
 	reqMap      *sync.Map
 	exchangeMap *sync.Map
-	proxyMap    *sync.Map
+	ProxyMap    *sync.Map
 	Wormhole    *Wormhole
 	Channel     chan Operate
 }
@@ -62,11 +62,11 @@ func newDispatcher(wormhole *Wormhole, name string, key string) *Dispatcher {
 		Key:         key,
 		reqMap:      &sync.Map{},
 		exchangeMap: &sync.Map{},
-		proxyMap:    &sync.Map{},
+		ProxyMap:    &sync.Map{},
 		Wormhole:    wormhole,
 		Channel:     make(chan Operate, 10),
 	}
-	dispatcherMap.Store(key, d)
+	DispatcherMap.Store(key, d)
 	return d
 }
 
@@ -178,8 +178,8 @@ func (d *Dispatcher) DeleteExchange(name string) {
 }
 
 func (d *Dispatcher) clean() {
-	dispatcherMap.Delete(d.Key)
-	d.proxyMap.Range(func(key, value interface{}) bool {
+	DispatcherMap.Delete(d.Key)
+	d.ProxyMap.Range(func(key, value interface{}) bool {
 		if p, ok := value.(*ProxyCtl); ok {
 			p.Stop()
 		}

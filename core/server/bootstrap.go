@@ -1,8 +1,8 @@
 package server
 
 import (
+	config "github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/core/filter"
-	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/logger"
 )
 

@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"crypto/tls"
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/codec"
-	config "github.com/cyejing/shuttle/pkg/config/client"
-	"github.com/cyejing/shuttle/pkg/operate"
+	"github.com/cyejing/shuttle/core/codec"
+	config "github.com/cyejing/shuttle/core/config/client"
+	operate2 "github.com/cyejing/shuttle/core/operate"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -69,7 +69,7 @@ func dialRemote(c *config.Config) error {
 		return utils.BaseErr(fmt.Sprintf("dial remote addr fail %s", addr), err)
 	}
 
-	wormhole := &operate.Wormhole{
+	wormhole := &operate2.Wormhole{
 		Hash: c.GetHash(),
 		Br:   bufio.NewReader(conn),
 		Rwc:  conn,
@@ -84,7 +84,7 @@ func dialRemote(c *config.Config) error {
 		return utils.Err(err)
 	}
 
-	err = operate.NewCliDispatcher(wormhole, c.Name).Connect()
+	err = operate2.NewCliDispatcher(wormhole, c.Name).Connect()
 	if err != nil {
 		return err
 	}

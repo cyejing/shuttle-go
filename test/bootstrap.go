@@ -3,9 +3,9 @@ package test
 import (
 	"fmt"
 	"github.com/cyejing/shuttle/core/client"
+	clientC "github.com/cyejing/shuttle/core/config/client"
+	serverC "github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/core/server"
-	clientC "github.com/cyejing/shuttle/pkg/config/client"
-	serverC "github.com/cyejing/shuttle/pkg/config/server"
 	"io"
 	"log"
 	"net"

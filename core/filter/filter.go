@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	config "github.com/cyejing/shuttle/pkg/config/server"
+	config "github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/goinggo/mapstructure"
 	"net/http"

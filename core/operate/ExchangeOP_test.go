@@ -21,7 +21,7 @@ func TestExchangeOPCodec(t *testing.T) {
 	}
 	fmt.Println(hex.Dump(encodeByte.Bytes()))
 
-	eop:=typeMap[ExchangeType]().(*ExchangeOP)
+	eop:= typeMap[ExchangeType]().(*ExchangeOP)
 	err = eop.Decode(bufio.NewReader(encodeByte))
 	if err != nil {
 		t.Error(err)

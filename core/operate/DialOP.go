@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/cyejing/shuttle/pkg/codec"
+	codec2 "github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
@@ -13,7 +13,7 @@ func init() {
 	registerOp(DialType, func() Operate {
 		return &DialOP{
 			ReqBase: new(ReqBase),
-			Address: new(codec.Address),
+			Address: new(codec2.Address),
 		}
 	})
 }
@@ -22,10 +22,10 @@ type DialOP struct {
 	*ReqBase
 	nameLen uint32
 	name    string
-	*codec.Address
+	*codec2.Address
 }
 
-func NewDialOP(name string, address *codec.Address) *DialOP {
+func NewDialOP(name string, address *codec2.Address) *DialOP {
 	return &DialOP{
 		ReqBase: NewReqBase(DialType),
 		name:    name,
@@ -36,7 +36,7 @@ func NewDialOP(name string, address *codec.Address) *DialOP {
 func (d *DialOP) Encode(buf *bytes.Buffer) error {
 	body := bytes.NewBuffer(make([]byte, 0))
 	nameByte := []byte(d.name)
-	body.Write(codec.EncodeUint32(uint32(len(nameByte))))
+	body.Write(codec2.EncodeUint32(uint32(len(nameByte))))
 	body.Write(nameByte)
 	err := d.Address.WriteTo(body)
 	if err != nil {
@@ -57,7 +57,7 @@ func (d *DialOP) Decode(buf *bufio.Reader) error {
 	if err != nil {
 		return utils.BaseErr("connect command decode err", err)
 	}
-	d.nameLen = codec.DecodeUint32(d.body[:4])
+	d.nameLen = codec2.DecodeUint32(d.body[:4])
 	d.name = string(d.body[4 : 4+d.nameLen])
 	addressBuf := bytes.NewBuffer(d.body[4+d.nameLen:])
 	err = d.Address.ReadFrom(addressBuf)

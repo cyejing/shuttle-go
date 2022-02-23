@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/cyejing/shuttle/core/client"
-	config "github.com/cyejing/shuttle/pkg/config/client"
+	config "github.com/cyejing/shuttle/core/config/client"
 	"github.com/cyejing/shuttle/pkg/logger"
 )
 

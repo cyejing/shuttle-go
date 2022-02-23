@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/cyejing/shuttle/pkg/config"
+	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
@@ -34,7 +34,7 @@ var (
 	defaultConfigPath = []string{
 		"shuttlec-socks.yaml",
 		"shuttlec-wormhole.yaml",
-		"example/shuttlec-socks.yaml",
+		//"example/shuttlec-socks.yaml",
 		"example/shuttlec-wormhole.yaml",
 	}
 	GlobalConfig = &Config{

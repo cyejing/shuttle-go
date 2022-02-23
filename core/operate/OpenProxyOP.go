@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/cyejing/shuttle/pkg/codec"
-	"github.com/cyejing/shuttle/pkg/config/client"
+	"github.com/cyejing/shuttle/core/codec"
+	"github.com/cyejing/shuttle/core/config/client"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 	"strings"
@@ -125,7 +125,7 @@ func NewProxyCtl(dispatcher *Dispatcher, shipName, remoteAddr, localAddr string)
 		ctx:        ctx,
 		stopFunc:   stopFunc,
 	}
-	dispatcher.proxyMap.Store(shipName, proxyCtl)
+	dispatcher.ProxyMap.Store(shipName, proxyCtl)
 	return proxyCtl
 }
 

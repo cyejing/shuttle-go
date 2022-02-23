@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 )

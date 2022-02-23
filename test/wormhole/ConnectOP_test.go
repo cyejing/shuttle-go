@@ -2,7 +2,7 @@ package wormhole
 
 import (
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/operate"
+	"github.com/cyejing/shuttle/core/operate"
 	"github.com/cyejing/shuttle/test"
 	"github.com/stretchr/testify/assert"
 	"os"

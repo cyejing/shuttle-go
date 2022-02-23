@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
+	config "github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/core/server"
-	config "github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/logger"
 )
 

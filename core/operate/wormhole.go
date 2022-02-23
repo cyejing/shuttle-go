@@ -3,9 +3,9 @@ package operate
 import (
 	"bufio"
 	"context"
-	"github.com/cyejing/shuttle/pkg/codec"
+	"github.com/cyejing/shuttle/core/codec"
+	"github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/pkg/common"
-	"github.com/cyejing/shuttle/pkg/config/server"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"

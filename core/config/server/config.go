@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/cyejing/shuttle/pkg/config"
+	"github.com/cyejing/shuttle/core/config"
 	logger "github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
