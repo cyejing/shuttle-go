@@ -94,10 +94,13 @@ func DialTrojan(config *client.Config, metadata *Metadata) (outbound net.Conn, e
 func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 	hash, err := bufr.Peek(56)
 	if err != nil {
-		return false, utils.BaseErr("peek bytes fail", err)
+		if err == io.EOF {
+			return false, nil
+		}
+		return false, utils.BaseErr("peek trojan bytes fail", err)
 	}
 	if pw := server.Passwords[string(hash)]; pw != nil {
-		log.Infof("trojan %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
+		//log.Infof("trojan %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		trojan := Trojan{}
 		pr := &PeekReader{R: bufr}
 		err := trojan.Decode(pr)
@@ -116,7 +119,7 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 		if err != nil {
 			return false, utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.Address.String())
 		}
-		log.Infof("trojan %s requested connection to %s", conn.RemoteAddr(), trojan.Metadata.String())
+		log.Infof("%s trojan %s requested connection to %s",pw.Hash, conn.RemoteAddr(), trojan.Metadata.String())
 
 		defer outbound.Close()
 		return true, utils.ProxyStreamBuf(bufr, conn, outbound, outbound)

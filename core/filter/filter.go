@@ -146,7 +146,7 @@ func (c *Chain) DoFilter() {
 }
 
 func (c *Chain) complete() {
-	log.Debug("complete")
+
 }
 
 type RespErr struct {

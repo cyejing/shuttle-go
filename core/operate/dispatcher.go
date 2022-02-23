@@ -142,7 +142,7 @@ func (d *Dispatcher) Read() error {
 			log.Error(utils.NewErrf("unknow type op: %v", t))
 		}
 		op := newOp()
-		log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(), d.Wormhole.Rwc.RemoteAddr())
+		//log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(), d.Wormhole.Rwc.RemoteAddr())
 
 		err = op.Decode(buf)
 		if err != nil {

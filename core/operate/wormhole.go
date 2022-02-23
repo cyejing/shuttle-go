@@ -32,11 +32,14 @@ func (w *Wormhole) Decode(r io.Reader) error {
 func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 	hash, err := br.Peek(56)
 	if err != nil {
-		return false, utils.BaseErr("peek wormhole fail", err)
+		if err == io.EOF {
+			return false, nil
+		}
+		return false, utils.BaseErr("peek wormhole bytes fail", err)
 	}
 
 	if pw := server.WHPasswords[string(hash)]; pw != nil {
-		log.Infof("wormhole %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
+		//log.Infof("wormhole %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		wormhole := &Wormhole{
 			Hash: string(hash),
 			Br:   br,

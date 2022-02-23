@@ -1,4 +1,5 @@
-addr: 127.0.0.1:4880
+addrs:
+  - addr: 127.0.0.1:4880
 trojan:
   passwords:
     - sQtfRnfhcNoZYZh1wY9u

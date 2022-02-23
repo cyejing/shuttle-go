@@ -142,6 +142,7 @@ func (p *ProxyCtl) Stop() {
 }
 
 func (p *ProxyCtl) run() error {
+	log.Infof("open proxy at %s", p.RemoteAddr)
 	ln, err := net.Listen("tcp", p.RemoteAddr)
 	log.Infof("proxy [%s] listen at %s", p.ShipName, p.RemoteAddr)
 	if err != nil {

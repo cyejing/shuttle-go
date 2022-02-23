@@ -9,25 +9,13 @@ import (
 var log = logger.NewLog()
 
 func Run(c *config.Config) {
-	srv := &TLSServer{
-		Cert:    c.Cert,
-		Key:     c.Key,
-		Handler: filter.NewRouteMux(c),
+	addrLen := len(c.Addrs)
+	ec := make(chan error, addrLen)
+	for _, addr := range c.Addrs {
+		NewHttpServer(addr.Addr, addr.Cert, addr.Key, filter.NewRouteMux(c)).Run(ec)
 	}
-	ec := make(chan error, 2)
-	if c.Addr != "" {
-		go func() {
-			err := srv.ListenAndServe(c.Addr)
-			ec <- err
-		}()
+	for i := 0; i < addrLen; i++ {
+		err := <-ec
+		log.Errorln(err)
 	}
-	if c.SslAddr != "" && srv.Cert != "" && srv.Key != "" {
-		go func() {
-			err := srv.ListenAndServeTLS(c.SslAddr)
-			ec <- err
-		}()
-	}
-
-	e := <-ec
-	log.Errorln("server exit", e)
 }

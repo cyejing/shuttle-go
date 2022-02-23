@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/cyejing/shuttle/core/config"
-	logger "github.com/cyejing/shuttle/pkg/logger"
+	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
@@ -12,15 +12,18 @@ var log = logger.NewLog()
 
 //Config struct
 type Config struct {
-	Addr      string `yaml:"addr"`
-	SslAddr   string `yaml:"sslAddr"`
-	Cert      string
-	Key       string
+	Addrs     []Addr `yaml:"addrs"`
 	LogFile   string `yaml:"logFile"`
 	Gateway   Gateway
 	Instances []Instance
 	Trojan    Trojan
 	Wormhole  Wormhole
+}
+
+type Addr struct {
+	Addr string `yaml:"addr"`
+	Cert string `yaml:"cert"`
+	Key  string `yaml:"key"`
 }
 
 //Gateway struct

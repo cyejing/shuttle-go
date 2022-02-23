@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/pkg/utils"
+	"io"
 	"net"
 )
 
@@ -108,6 +109,9 @@ func (c *ExchangeCtlStu) Read() error {
 		buf := make([]byte, 1024 * 4)
 		i, err := c.raw.Read(buf)
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			return utils.BaseErrf("connCtl %s read err", err, c.name)
 		}
 		op := NewExchangeOP(c.name, buf[0:i])
