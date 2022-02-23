@@ -44,7 +44,7 @@ func (p proxy) Filter(exchange *Exchange, c interface{}) error {
 
 	r, err := client.Do(exchange.Req)
 	if err != nil {
-		return err
+		return NewRespErr(502, err.Error())
 	}
 
 	exchange.Resp.WriteHeader(r.StatusCode)
@@ -55,7 +55,10 @@ func (p proxy) Filter(exchange *Exchange, c interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
+	defer func() {
+		exchange.Completed()
+		r.Body.Close()
+	}()
 
 	return nil
 }

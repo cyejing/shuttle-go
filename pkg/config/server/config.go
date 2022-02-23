@@ -85,8 +85,6 @@ type Password struct {
 var (
 	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
 	GlobalConfig      = &Config{
-		Addr:    "127.0.0.1:4880",
-		SslAddr: "127.0.0.1:4843",
 		LogFile: "logs/shuttles.log",
 	}
 	Passwords   = make(map[string]*Password)

@@ -6,5 +6,5 @@ password: 58JCEmvcBkRAk1XkK1iH
 
 ships:
   - name: test
-    remoteAddr: 127.0.0.1:4082
+    remoteAddr: 127.0.0.1:4022
     localAddr: 127.0.0.1:22

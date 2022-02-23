@@ -16,36 +16,44 @@ import (
 func Run(c *config.Config) {
 	switch c.RunType {
 	case "socks":
-		socks5 := &Socks5Server{
-			Config:   c,
-			DialFunc: codec.DialTrojan,
-		}
-		panic(socks5.ListenAndServe("tcp", c.SockAddr))
+		runSocks(c)
 	case "wormhole":
-		for {
-			func() {
-				defer func() {
-					if err := recover(); err != nil {
-
-					}
-				}()
-				err := DialRemote(c)
-				if err != nil {
-					if err == io.EOF {
-						log.Info("remote conn close, reconnect later")
-					}else{
-						log.Error(utils.BaseErr("remote conn err", err))
-					}
-				}
-			}()
-			time.Sleep(time.Second * 5)
-			log.Infof("repeat dial remote %s", c.RemoteAddr)
-		}
+		loopRunWormhole(c)
 	}
 	log.Infof("client exit")
 }
 
-func DialRemote(c *config.Config) error {
+func runSocks(c *config.Config) {
+	socks5 := &Socks5Server{
+		Config:   c,
+		DialFunc: codec.DialTrojan,
+	}
+	panic(socks5.ListenAndServe("tcp", c.SockAddr))
+}
+
+func loopRunWormhole(c *config.Config) {
+	for {
+		err := dialRemote(c)
+		if err != nil {
+			if err == io.EOF {
+				log.Info("remote conn close, reconnect later")
+			} else {
+				log.Error(utils.BaseErr("remote conn err", err))
+			}
+		}
+
+		time.Sleep(time.Second * 5)
+		log.Infof("repeat dial remote %s", c.RemoteAddr)
+	}
+}
+
+func dialRemote(c *config.Config) error {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error(utils.NewErrf("run wormhole dial remote catch err %v", err))
+		}
+	}()
+
 	var conn net.Conn
 	var err error
 	network := "tcp"

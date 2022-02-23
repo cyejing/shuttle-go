@@ -27,6 +27,7 @@ _testmain.go
 bin/
 packages/
 release/
+build/
 it/bin/
 vendor/
 dist/

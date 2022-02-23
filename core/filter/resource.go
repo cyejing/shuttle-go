@@ -1,7 +1,6 @@
 package filter
 
 import (
-	"bytes"
 	"io"
 	"os"
 )
@@ -28,8 +27,6 @@ func (r resource) Name() string {
 }
 
 var indexHTML = []string{"index.html", "index.htm", "/index.html", "/index.htm"}
-var html404 = "<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>nginx</center>\n</body>\n</html>"
-var html404b = []byte(html404)
 
 func (r resource) Filter(exchange *Exchange, c interface{}) error {
 	var config ResourceConfig
@@ -60,15 +57,23 @@ func (r resource) Filter(exchange *Exchange, c interface{}) error {
 	}
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err = io.Copy(exchange.Resp, bytes.NewReader(html404b))
+			write404(exchange.Resp)
+			exchange.Completed()
 		}
-		return err
+		return nil
 	}
 
 	_, err = io.Copy(exchange.Resp, file) // auto sendfile, good job
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	defer func() {
+		exchange.Completed()
+		if file != nil {
+			file.Close()
+		}
+	}()
 	return nil
 }
+

@@ -15,11 +15,13 @@ func Run(c *config.Config) {
 		Handler: filter.NewRouteMux(c),
 	}
 	ec := make(chan error, 2)
-	go func() {
-		err := srv.ListenAndServe(c.Addr)
-		ec <- err
-	}()
-	if srv.Cert!="" && srv.Key!= "" {
+	if c.Addr != "" {
+		go func() {
+			err := srv.ListenAndServe(c.Addr)
+			ec <- err
+		}()
+	}
+	if c.SslAddr != "" && srv.Cert != "" && srv.Key != "" {
 		go func() {
 			err := srv.ListenAndServeTLS(c.SslAddr)
 			ec <- err
@@ -27,7 +29,5 @@ func Run(c *config.Config) {
 	}
 
 	e := <-ec
-	logger.NewLog().Error(e)
-	log.Infof("server exit")
+	log.Errorln("server exit", e)
 }
-

@@ -21,8 +21,9 @@ func (t tail) Name() string {
 }
 
 func (t tail) Filter(exchange *Exchange, config interface{}) error {
-	exchange.Completed = true
+	log.Infof("filter tail")
 	writeSelf(exchange.Resp, exchange.Req)
+	exchange.Completed()
 	return nil
 }
 

@@ -80,7 +80,7 @@ ships:
 ```
 
 #### Enjoy Internet
-tcp-ship -> remoteAddr -> localAddr
+ship-tcp -> remoteAddr -> localAddr
 
 ### Route代理使用
 #### Start Server
