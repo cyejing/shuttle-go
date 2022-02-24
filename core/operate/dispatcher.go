@@ -139,7 +139,8 @@ func (d *Dispatcher) Read() error {
 
 		newOp := typeMap[t]
 		if newOp == nil {
-			log.Error(utils.NewErrf("unknow type op: %v", t))
+			log.Error(utils.NewErrf("unknown type op: %v", t))
+			continue
 		}
 		op := newOp()
 		//log.Infof("%s read op %s, remote[%v]", d.Key, reflect.TypeOf(op).String(), d.Wormhole.Rwc.RemoteAddr())
@@ -147,6 +148,7 @@ func (d *Dispatcher) Read() error {
 		err = op.Decode(buf)
 		if err != nil {
 			log.Error(utils.BaseErrf("op %s decode err", err, reflect.TypeOf(op).Name()))
+			continue
 		}
 		err = op.Execute(context.WithValue(context.Background(), common.DispatcherKey, d))
 		if err != nil {
