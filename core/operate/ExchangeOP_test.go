@@ -28,5 +28,30 @@ func TestExchangeOPCodec(t *testing.T) {
 	}
 	assert.Equal(t, "test", eop.name)
 	assert.Equal(t, uint32(len([]byte("test"))), eop.nameLen)
+	assert.Equal(t, false,eop.invalid)
+	assert.Equal(t, data, eop.data)
+}
+
+func TestExchangeOPCodec2(t *testing.T) {
+	data := []byte{0xa, 0xa, 0xa}
+	exchangeOP := NewExchangeOP("test", data)
+	exchangeOP.invalid=true
+
+	encodeByte := bytes.NewBuffer([]byte{})
+
+	err := exchangeOP.Encode(encodeByte)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(hex.Dump(encodeByte.Bytes()))
+
+	eop:= typeMap[ExchangeType]().(*ExchangeOP)
+	err = eop.Decode(bufio.NewReader(encodeByte))
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "test", eop.name)
+	assert.Equal(t, uint32(len([]byte("test"))), eop.nameLen)
+	assert.Equal(t, true,eop.invalid)
 	assert.Equal(t, data, eop.data)
 }

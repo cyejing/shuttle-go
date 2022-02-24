@@ -107,7 +107,7 @@ func (s *HttpServer) server(ln net.Listener) error {
 			err := c.handle()
 			if err != nil {
 				if err != io.EOF {
-					log.Error("server handle conn fail :", err)
+					log.Debug("server handle conn fail : ", err)
 				}
 				return
 			}

@@ -120,8 +120,12 @@ func NewChain(resp http.ResponseWriter, req *http.Request, route config.Route) *
 //DoFilter run filter
 func (c *Chain) DoFilter() {
 	for _, f := range c.Filters {
-		fc := c.Route.GetFilter(f.Name())
-		err := f.Filter(c.Exchange, fc.Params)
+		fc, err := c.Route.GetFilter(f.Name())
+		if err != nil {
+			log.Warn(err)
+			continue
+		}
+		err = f.Filter(c.Exchange, fc.Params)
 
 		if err != nil {
 			if re, ok := err.(*RespErr); ok {

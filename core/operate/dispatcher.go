@@ -42,7 +42,7 @@ type Dispatcher struct {
 	Name        string
 	Key         string
 	reqMap      *sync.Map
-	exchangeMap *sync.Map
+	ExchangeMap *sync.Map
 	ProxyMap    *sync.Map
 	Wormhole    *Wormhole
 	Channel     chan Operate
@@ -61,7 +61,7 @@ func newDispatcher(wormhole *Wormhole, name string, key string) *Dispatcher {
 		Name:        name,
 		Key:         key,
 		reqMap:      &sync.Map{},
-		exchangeMap: &sync.Map{},
+		ExchangeMap: &sync.Map{},
 		ProxyMap:    &sync.Map{},
 		Wormhole:    wormhole,
 		Channel:     make(chan Operate, 10),
@@ -167,7 +167,7 @@ func (d *Dispatcher) LoadReq(reqId uint32) (ReqOperate, bool) {
 }
 
 func (d *Dispatcher) LoadExchange(name string) (ExchangeCtl, bool) {
-	if a, ok := d.exchangeMap.Load(name); ok {
+	if a, ok := d.ExchangeMap.Load(name); ok {
 		if ec, o := a.(ExchangeCtl); o {
 			return ec, true
 		}
@@ -176,7 +176,7 @@ func (d *Dispatcher) LoadExchange(name string) (ExchangeCtl, bool) {
 }
 
 func (d *Dispatcher) DeleteExchange(name string) {
-	d.exchangeMap.Delete(name)
+	d.ExchangeMap.Delete(name)
 }
 
 func (d *Dispatcher) clean() {

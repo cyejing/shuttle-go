@@ -14,6 +14,7 @@ type ExchangeOP struct {
 	*ReqBase
 	nameLen uint32
 	name    string
+	invalid bool
 	data    []byte
 }
 
@@ -30,6 +31,7 @@ func NewExchangeOP(name string, data []byte) *ExchangeOP {
 		ReqBase: NewReqBase(ExchangeType),
 		nameLen: 0,
 		name:    name,
+		invalid: false,
 		data:    data,
 	}
 }
@@ -39,6 +41,11 @@ func (e *ExchangeOP) Encode(buf *bytes.Buffer) error {
 	nameByte := []byte(e.name)
 	body.Write(codec.EncodeUint32(uint32(len(nameByte))))
 	body.Write(nameByte)
+	if e.invalid {
+		body.WriteByte(byte(1))
+	} else {
+		body.WriteByte(byte(0))
+	}
 	body.Write(e.data)
 	e.body = body.Bytes()
 	bs, err := e.ReqBase.Encode()
@@ -56,7 +63,13 @@ func (e *ExchangeOP) Decode(buf *bufio.Reader) error {
 	}
 	e.nameLen = codec.DecodeUint32(e.body[:4])
 	e.name = string(e.body[4 : 4+e.nameLen])
-	e.data = e.body[4+e.nameLen:]
+	i := e.body[4+e.nameLen]
+	if i == 0 {
+		e.invalid = false
+	} else {
+		e.invalid = true
+	}
+	e.data = e.body[5+e.nameLen:]
 	return nil
 }
 
@@ -66,9 +79,13 @@ func (e *ExchangeOP) Execute(ctx context.Context) error {
 		return err
 	}
 	if exchangeCtl, ok := d.LoadExchange(e.name); ok {
+		if e.invalid {
+			exchangeCtl.Close()
+		}
 		err := exchangeCtl.Write(e.data)
 		if err != nil {
-			return utils.BaseErr("exchange ctl write data err", err)
+			exchangeCtl.SendInvalid()
+			exchangeCtl.Close()
 		}
 	}
 	return nil
@@ -76,29 +93,31 @@ func (e *ExchangeOP) Execute(ctx context.Context) error {
 
 type ExchangeCtl interface {
 	Write(b []byte) error
+	Close()
+	SendInvalid()
 }
 
 type ExchangeCtlStu struct {
-	name       string
+	Name       string
 	dispatcher *Dispatcher
 
-	raw net.Conn
+	Raw net.Conn
 }
 
 func NewExchangeCtl(name string, d *Dispatcher, raw net.Conn) *ExchangeCtlStu {
 	ecs := &ExchangeCtlStu{
-		name:       name,
+		Name:       name,
 		dispatcher: d,
-		raw:        raw,
+		Raw:        raw,
 	}
-	d.exchangeMap.Store(name, ecs)
+	d.ExchangeMap.Store(name, ecs)
 	return ecs
 }
 
 func (c *ExchangeCtlStu) Write(b []byte) error {
-	_, err := c.raw.Write(b)
+	_, err := c.Raw.Write(b)
 	if err != nil {
-		return utils.BaseErrf("write conn %v err", err, c.raw)
+		return utils.BaseErrf("write conn %v err", err, c.Raw)
 	}
 	return nil
 }
@@ -106,22 +125,30 @@ func (c *ExchangeCtlStu) Write(b []byte) error {
 func (c *ExchangeCtlStu) Read() error {
 	for true {
 		// send OP, cannot reuse buf
-		buf := make([]byte, 1024 * 4)
-		i, err := c.raw.Read(buf)
+		buf := make([]byte, 1024*4)
+		i, err := c.Raw.Read(buf)
 		if err != nil {
+			c.SendInvalid()
+			c.Close()
 			if err == io.EOF {
 				return nil
 			}
-			return utils.BaseErrf("connCtl %s read err", err, c.name)
+			return utils.BaseErrf("connCtl %s read err", err, c.Name)
 		}
-		op := NewExchangeOP(c.name, buf[0:i])
+		op := NewExchangeOP(c.Name, buf[0:i])
 		c.dispatcher.Send(op)
 	}
 	return nil
 }
 
-func (c *ExchangeCtlStu) Invalid(msg string) {
-	c.dispatcher.DeleteExchange(c.name)
-	log.Warnf("exchange ctl stu invalid name:%s, msg:%s", c.name, msg)
-	//c.dispatcher.Send(InvalidOP msg) TODO
+func (c *ExchangeCtlStu) Close() {
+	c.dispatcher.DeleteExchange(c.Name)
+	log.Infof("exchange ctl stu close name:%s", c.Name)
+	c.Raw.Close()
+}
+
+func (c *ExchangeCtlStu) SendInvalid() {
+	invalidOP := NewExchangeOP(c.Name, nil)
+	invalidOP.invalid = true
+	c.dispatcher.Send(invalidOP)
 }

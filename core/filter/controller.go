@@ -42,8 +42,9 @@ func (s controller) Init(mux *RouteMux) {
 }
 
 type wormholeResult struct {
-	Name string
-	Ship []*shipResult
+	Name     string
+	Ship     []*shipResult
+	Exchange []string
 }
 type shipResult struct {
 	ShipName   string
@@ -62,7 +63,14 @@ func listWormhole(req *http.Request, r map[string]interface{}) {
 				}
 				return true
 			})
-			wormholes = append(wormholes, &wormholeResult{Ship: ship, Name: d.Name})
+			ex := make([]string, 0)
+			d.ExchangeMap.Range(func(key, value interface{}) bool {
+				if e, ok := value.(*operate2.ExchangeCtlStu); ok {
+					ex = append(ex, fmt.Sprintf("exchange [%s] : %v -> %v", e.Name, e.Raw.LocalAddr(), e.Raw.RemoteAddr()))
+				}
+				return true
+			})
+			wormholes = append(wormholes, &wormholeResult{Ship: ship, Name: d.Name, Exchange: ex})
 		}
 		return true
 	})

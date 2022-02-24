@@ -169,7 +169,7 @@ func (p *ProxyCtl) run() error {
 				defer conn.Close()
 				err := p.serveConn(conn)
 				if err != nil {
-					log.Errorln(utils.BaseErr("handle proxy fail", err))
+					log.Warn(utils.BaseErr("handle proxy fail", err))
 					return
 				}
 			}()
@@ -178,11 +178,12 @@ func (p *ProxyCtl) run() error {
 }
 
 func (p *ProxyCtl) serveConn(conn net.Conn) error {
-	exchangeCtl := NewExchangeCtl(p.ShipName, p.dispatcher, conn)
+	uniqueId := utils.GenUniqueId()
+	exchangeCtl := NewExchangeCtl(uniqueId, p.dispatcher, conn)
 	addr, err := codec.NewAddressFromAddr("tcp", p.LocalAddr)
 	if err != nil {
 		return err
 	}
-	p.dispatcher.Send(NewDialOP(p.ShipName, addr))
+	p.dispatcher.Send(NewDialOP(uniqueId, addr))
 	return exchangeCtl.Read()
 }

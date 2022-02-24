@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -31,4 +32,8 @@ func SplitPathAndFile(s string) (string, string, error) {
 		return s, "", fmt.Errorf("path is illegal : %s", s)
 	}
 	return s[:slash], s[slash+1:], nil
+}
+
+func GenUniqueId() string {
+	return uuid.NewString()
 }

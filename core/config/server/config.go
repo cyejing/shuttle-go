@@ -52,13 +52,13 @@ type Route struct {
 }
 
 // GetFilter route get filter
-func (r Route) GetFilter(name string) Filter {
+func (r Route) GetFilter(name string) (Filter, error) {
 	for _, filter := range r.Filters {
 		if name == filter.Name {
-			return filter
+			return filter, nil
 		}
 	}
-	return *new(Filter)
+	return *new(Filter), utils.NewErrf("not fount filter %s ", name)
 }
 
 // Instance struct
