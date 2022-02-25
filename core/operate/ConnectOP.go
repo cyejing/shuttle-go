@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 )
 
 type ConnectOp struct {
@@ -40,7 +40,7 @@ func (c *ConnectOp) Encode(buf *bytes.Buffer) error {
 func (c *ConnectOp) Decode(buf *bufio.Reader) error {
 	err := c.ReqBase.Decode(buf)
 	if err != nil {
-		return utils.BaseErr("connect command decode fail", err)
+		return errors.BaseErr("connect command decode fail", err)
 	}
 	c.name = string(c.body)
 	return nil

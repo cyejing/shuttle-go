@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 	"net"
 )
@@ -50,7 +50,7 @@ func (e *ExchangeOP) Encode(buf *bytes.Buffer) error {
 	e.body = body.Bytes()
 	bs, err := e.ReqBase.Encode()
 	if err != nil {
-		return utils.BaseErr("exchange op encode err", err)
+		return errors.BaseErr("exchange op encode err", err)
 	}
 	buf.Write(bs)
 	return nil
@@ -59,7 +59,7 @@ func (e *ExchangeOP) Encode(buf *bytes.Buffer) error {
 func (e *ExchangeOP) Decode(buf *bufio.Reader) error {
 	err := e.ReqBase.Decode(buf)
 	if err != nil {
-		return utils.BaseErr("exchange op decode err", err)
+		return errors.BaseErr("exchange op decode err", err)
 	}
 	e.nameLen = codec.DecodeUint32(e.body[:4])
 	e.name = string(e.body[4 : 4+e.nameLen])
@@ -117,7 +117,7 @@ func NewExchangeCtl(name string, d *Dispatcher, raw net.Conn) *ExchangeCtlStu {
 func (c *ExchangeCtlStu) Write(b []byte) error {
 	_, err := c.Raw.Write(b)
 	if err != nil {
-		return utils.BaseErrf("write conn %v err", err, c.Raw)
+		return errors.BaseErrf("write conn %v err", err, c.Raw)
 	}
 	return nil
 }
@@ -133,7 +133,7 @@ func (c *ExchangeCtlStu) Read() error {
 			if err == io.EOF {
 				return nil
 			}
-			return utils.BaseErrf("connCtl %s read err", err, c.Name)
+			return errors.BaseErrf("connCtl %s read err", err, c.Name)
 		}
 		op := NewExchangeOP(c.Name, buf[0:i])
 		c.dispatcher.Send(op)

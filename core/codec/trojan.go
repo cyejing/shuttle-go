@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"github.com/cyejing/shuttle/core/config/client"
 	"github.com/cyejing/shuttle/core/config/server"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"io"
 	"net"
@@ -26,7 +27,7 @@ func (s *Trojan) Encode() ([]byte, error) {
 	buf.Write(crlf)
 	err := s.Metadata.WriteTo(buf)
 	if err != nil {
-		return nil, utils.BaseErr("trojan encode write fail", err)
+		return nil, errors.BaseErr("trojan encode write fail", err)
 	}
 	buf.Write(crlf)
 	return buf.Bytes(), nil
@@ -37,22 +38,22 @@ func (s *Trojan) Decode(reader io.Reader) error {
 	hash := [56]byte{}
 	n, err := reader.Read(hash[:])
 	if err != nil || n != 56 {
-		return utils.BaseErr("failed to read hash", err)
+		return errors.BaseErr("failed to read hash", err)
 	}
 	crlf := [2]byte{}
 	_, err = io.ReadFull(reader, crlf[:])
 	if err != nil {
-		return utils.BaseErr("trojan decode read buf", err)
+		return errors.BaseErr("trojan decode read buf", err)
 	}
 
 	s.Metadata = &Metadata{}
 	if err := s.Metadata.ReadFrom(reader); err != nil {
-		return utils.BaseErr("trojan decode read buf", err)
+		return errors.BaseErr("trojan decode read buf", err)
 	}
 
 	_, err = io.ReadFull(reader, crlf[:])
 	if err != nil {
-		return utils.BaseErr("trojan decode read buf", err)
+		return errors.BaseErr("trojan decode read buf", err)
 	}
 	return nil
 }
@@ -97,7 +98,7 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 		if err == io.EOF {
 			return false, nil
 		}
-		return false, utils.BaseErr("peek trojan bytes fail", err)
+		return false, errors.BaseErr("peek trojan bytes fail", err)
 	}
 	if pw := server.Passwords[string(hash)]; pw != nil {
 		//log.Infof("trojan %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
@@ -117,7 +118,7 @@ func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 
 		outbound, err := net.Dial("tcp", trojan.Metadata.Address.String())
 		if err != nil {
-			return false, utils.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.Address.String())
+			return false, errors.BaseErrf("trojan dial addr fail %v", err, trojan.Metadata.Address.String())
 		}
 		log.Infof("%s trojan %s requested connection to %s",pw.Hash, conn.RemoteAddr(), trojan.Metadata.String())
 

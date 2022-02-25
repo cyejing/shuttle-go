@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 )
 
@@ -51,13 +51,13 @@ func (r *RespOP) Encode(buf *bytes.Buffer) error {
 func (r *RespOP) Decode(buf *bufio.Reader) error {
 	tb, err := codec.ReadByte(buf)
 	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
+		return errors.BaseErr("req base decode fail", err)
 	}
 	r.Type = Type(tb)
 
 	statusByte, err := codec.ReadByte(buf)
 	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
+		return errors.BaseErr("req base decode fail", err)
 	}
 	r.Status = Status(statusByte)
 
@@ -77,7 +77,7 @@ func (r *RespOP) Decode(buf *bufio.Reader) error {
 		body := make([]byte, bodyLen)
 		_, err = io.ReadFull(buf, body)
 		if err != nil {
-			return utils.BaseErr("response command read Body fail", err)
+			return errors.BaseErr("response command read Body fail", err)
 		}
 		r.Body = body[:]
 	}

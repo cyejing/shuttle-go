@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 	"net"
 	"strconv"
@@ -28,22 +28,22 @@ func (s *Socks5) HandleHandshake() error {
 	bufConn := bufio.NewReader(s.Conn)
 	version := []byte{0}
 	if _, err := bufConn.Read(version); err != nil {
-		return utils.BaseErr("Failed to get version byte", err)
+		return errors.BaseErr("Failed to get version byte", err)
 	}
 	// Ensure we are compatible
 	if version[0] != Socks5Version {
-		return utils.NewErrf("unsupported SOCKS version: %v", string(version))
+		return errors.NewErrf("unsupported SOCKS version: %v", string(version))
 	}
 	header := []byte{0}
 	if _, err := bufConn.Read(header); err != nil {
-		return utils.BaseErr("socks5 handshake fail", err)
+		return errors.BaseErr("socks5 handshake fail", err)
 	}
 
 	numMethods := int(header[0])
 	methods := make([]byte, numMethods)
 	_, err := io.ReadAtLeast(bufConn, methods, numMethods)
 	if err != nil {
-		return utils.BaseErr("socks5 handshake fail", err)
+		return errors.BaseErr("socks5 handshake fail", err)
 	}
 
 	useMethod := NoAuth //默认不需要密码
@@ -59,17 +59,17 @@ func (s *Socks5) LSTRequest() (err error) {
 	// Decode the version byte
 	header := []byte{0, 0, 0}
 	if _, err := io.ReadAtLeast(conn, header, 3); err != nil {
-		return utils.BaseErr("socks5 LSTRequest read header fail", err)
+		return errors.BaseErr("socks5 LSTRequest read header fail", err)
 	}
 	// Ensure we are compatible
 	if header[0] != Socks5Version {
-		return utils.NewErrf("unsupported SOCKS version: %v", string(header[:1]))
+		return errors.NewErrf("unsupported SOCKS version: %v", string(header[:1]))
 	}
 
 	address := new(Address)
 	err = address.ReadFrom(conn)
 	if err != nil {
-		return utils.BaseErr("socks5 LSTRequest fail", err)
+		return errors.BaseErr("socks5 LSTRequest fail", err)
 	}
 
 	s.Metadata = &Metadata{
@@ -150,7 +150,7 @@ func (r *Metadata) ReadFrom(rr io.Reader) error {
 	r.Address = new(Address)
 	err = r.Address.ReadFrom(rr)
 	if err != nil {
-		return utils.BaseErr("failed to marshal Address", err)
+		return errors.BaseErr("failed to marshal Address", err)
 	}
 	return nil
 }
@@ -224,7 +224,7 @@ func (a *Address) ResolveIP() (net.IP, error) {
 	}
 	addr, err := net.ResolveIPAddr("ip", a.DomainName)
 	if err != nil {
-		return nil, utils.BaseErr("resolve ip fail", err)
+		return nil, errors.BaseErr("resolve ip fail", err)
 	}
 	a.IP = addr.IP
 	return addr.IP, nil
@@ -234,7 +234,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 	byteBuf := [1]byte{}
 	_, err := io.ReadFull(r, byteBuf[:])
 	if err != nil {
-		return utils.BaseErr("unable to read ATYP", err)
+		return errors.BaseErr("unable to read ATYP", err)
 	}
 	a.AddressType = AddressType(byteBuf[0])
 	switch a.AddressType {
@@ -242,7 +242,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		var buf [6]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read IPv4", err)
+			return errors.BaseErr("failed to read IPv4", err)
 		}
 		a.IP = buf[0:4]
 		a.Port = int(binary.BigEndian.Uint16(buf[4:6]))
@@ -250,7 +250,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		var buf [18]byte
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
-			return utils.BaseErr("failed to read IPv6", err)
+			return errors.BaseErr("failed to read IPv6", err)
 		}
 		a.IP = buf[0:16]
 		a.Port = int(binary.BigEndian.Uint16(buf[16:18]))
@@ -258,12 +258,12 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		_, err := io.ReadFull(r, byteBuf[:])
 		length := byteBuf[0]
 		if err != nil {
-			return utils.NewErr("failed to read domain name length")
+			return errors.NewErr("failed to read domain name length")
 		}
 		buf := make([]byte, length+2)
 		_, err = io.ReadFull(r, buf)
 		if err != nil {
-			return utils.NewErr("failed to read domain name")
+			return errors.NewErr("failed to read domain name")
 		}
 		// the fucking browser uses IP as a domain name sometimes
 		host := buf[0:length]
@@ -279,7 +279,7 @@ func (a *Address) ReadFrom(r io.Reader) error {
 		}
 		a.Port = int(binary.BigEndian.Uint16(buf[length : length+2]))
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return errors.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	return nil
 }
@@ -298,7 +298,7 @@ func (a *Address) WriteTo(w io.Writer) error {
 	case IPv6:
 		_, err = w.Write(a.IP.To16())
 	default:
-		return utils.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
+		return errors.NewErr("invalid ATYP " + strconv.FormatInt(int64(a.AddressType), 10))
 	}
 	if err != nil {
 		return err

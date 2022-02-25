@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/core/config/client"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
@@ -45,16 +46,16 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	err = socks5.HandleHandshake()
 	if err != nil {
-		return utils.BaseErr("socks5 HandleHandshake fail", err)
+		return errors.BaseErr("socks5 HandleHandshake fail", err)
 	}
 	err = socks5.LSTRequest()
 	if err != nil {
-		return utils.BaseErr("socks5 LSTRequest fail", err)
+		return errors.BaseErr("socks5 LSTRequest fail", err)
 	}
 
 	outbound, err := s.DialFunc(s.Config, socks5.Metadata)
 	if err != nil {
-		return utils.BaseErrf("socks5 dial remote fail %v", err, outbound)
+		return errors.BaseErrf("socks5 dial remote fail %v", err, outbound)
 	}
 	defer outbound.Close()
 
@@ -62,7 +63,7 @@ func (s *Socks5Server) ServeConn(conn net.Conn) (err error) {
 
 	err = socks5.SendReply(codec.SuccessReply)
 	if err != nil {
-		return utils.BaseErr("socks5 sendReply fail", err)
+		return errors.BaseErr("socks5 sendReply fail", err)
 	}
 
 	return utils.ProxyStream(conn, outbound)

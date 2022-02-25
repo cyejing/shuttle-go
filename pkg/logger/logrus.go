@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -33,11 +34,11 @@ func initMultiLog(writers ...io.Writer) *logrus.Logger {
 func InitLog(file string) error {
 	path, _, err := utils.SplitPathAndFile(file)
 	if err != nil {
-		return utils.BaseErr("split file path fail", err)
+		return errors.BaseErr("split file path fail", err)
 	}
 	err = os.MkdirAll(path, 0766)
 	if err != nil {
-		return utils.BaseErr("mkdir path fail", err)
+		return errors.BaseErr("mkdir path fail", err)
 	}
 	f, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {

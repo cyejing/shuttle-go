@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	codec2 "github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"net"
 )
 
@@ -40,7 +40,7 @@ func (d *DialOP) Encode(buf *bytes.Buffer) error {
 	body.Write(nameByte)
 	err := d.Address.WriteTo(body)
 	if err != nil {
-		return utils.BaseErr("encode address err", err)
+		return errors.BaseErr("encode address err", err)
 	}
 	d.body = body.Bytes()
 
@@ -55,14 +55,14 @@ func (d *DialOP) Encode(buf *bytes.Buffer) error {
 func (d *DialOP) Decode(buf *bufio.Reader) error {
 	err := d.ReqBase.Decode(buf)
 	if err != nil {
-		return utils.BaseErr("connect command decode err", err)
+		return errors.BaseErr("connect command decode err", err)
 	}
 	d.nameLen = codec2.DecodeUint32(d.body[:4])
 	d.name = string(d.body[4 : 4+d.nameLen])
 	addressBuf := bytes.NewBuffer(d.body[4+d.nameLen:])
 	err = d.Address.ReadFrom(addressBuf)
 	if err != nil {
-		return utils.BaseErr("decode address err", err)
+		return errors.BaseErr("decode address err", err)
 	}
 	return nil
 }

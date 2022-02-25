@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/core/config/client"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 	"strings"
@@ -56,7 +57,7 @@ func (o *OpenProxy) Encode(buf *bytes.Buffer) error {
 	o.body = body.Bytes()
 	bs, err := o.ReqBase.Encode()
 	if err != nil {
-		return utils.BaseErr("openProxy op encode err", err)
+		return errors.BaseErr("openProxy op encode err", err)
 	}
 	buf.Write(bs)
 	return nil
@@ -65,25 +66,25 @@ func (o *OpenProxy) Encode(buf *bytes.Buffer) error {
 func (o *OpenProxy) Decode(buf *bufio.Reader) error {
 	err := o.ReqBase.Decode(buf)
 	if err != nil {
-		return utils.BaseErr("openProxy op decode err", err)
+		return errors.BaseErr("openProxy op decode err", err)
 	}
 	reader := bufio.NewReader(bytes.NewReader(o.body))
 
 	shipName, err := reader.ReadSlice(spliceStr)
 	if err != nil {
-		return utils.BaseErr("open proxy op read slice err", err)
+		return errors.BaseErr("open proxy op read slice err", err)
 	}
 	o.ShipName = string(shipName[:len(shipName)-1])
 
 	remoteAddr, err := reader.ReadSlice(spliceStr)
 	if err != nil {
-		return utils.BaseErr("open proxy op read slice err", err)
+		return errors.BaseErr("open proxy op read slice err", err)
 	}
 	o.RemoteAddr = string(remoteAddr[:len(remoteAddr)-1])
 
 	localAddr, err := reader.ReadSlice(spliceStr)
 	if err != nil {
-		return utils.BaseErr("open proxy op read slice err", err)
+		return errors.BaseErr("open proxy op read slice err", err)
 	}
 	o.LocalAddr = string(localAddr[:len(localAddr)-1])
 
@@ -98,7 +99,7 @@ func (o *OpenProxy) Execute(ctx context.Context) error {
 	go func() {
 		err := NewProxyCtl(dispatcher, o.ShipName, o.RemoteAddr, o.LocalAddr).Run()
 		if err != nil {
-			dispatcher.Send(NewRespOP(FailStatus, o.reqId, utils.BaseErr("new proxy ctl err", err).Error()))
+			dispatcher.Send(NewRespOP(FailStatus, o.reqId, errors.BaseErr("new proxy ctl err", err).Error()))
 		} else {
 			dispatcher.Send(NewRespOP(SuccessStatus, o.reqId, "ok"))
 		}
@@ -146,7 +147,7 @@ func (p *ProxyCtl) run() error {
 	ln, err := net.Listen("tcp", p.RemoteAddr)
 	log.Infof("proxy [%s] listen at %s", p.ShipName, p.RemoteAddr)
 	if err != nil {
-		return utils.BaseErr("proxy server ctl listen err", err)
+		return errors.BaseErr("proxy server ctl listen err", err)
 	}
 	for {
 		connChan := make(chan net.Conn)
@@ -169,7 +170,7 @@ func (p *ProxyCtl) run() error {
 				defer conn.Close()
 				err := p.serveConn(conn)
 				if err != nil {
-					log.Warn(utils.BaseErr("handle proxy fail", err))
+					log.Warn(errors.BaseErr("handle proxy fail", err))
 					return
 				}
 			}()

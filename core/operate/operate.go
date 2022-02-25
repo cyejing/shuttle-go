@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 )
 
@@ -66,24 +66,24 @@ func NewReqBase(t Type) *ReqBase {
 func (rb *ReqBase) Decode(r io.Reader) error {
 	tb, err := codec.ReadByte(r)
 	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
+		return errors.BaseErr("req base decode fail", err)
 	}
 	rb.Type = Type(tb)
 	reqId, err := codec.ReadUint32(r)
 	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
+		return errors.BaseErr("req base decode fail", err)
 	}
 	rb.reqId = reqId
 	bodyLen, err := codec.ReadUint32(r)
 	if err != nil {
-		return utils.BaseErr("req base decode fail", err)
+		return errors.BaseErr("req base decode fail", err)
 	}
 	rb.len = bodyLen
 	if bodyLen > 0 {
 		bodyBytes := make([]byte, bodyLen)
 		_, err = io.ReadFull(r, bodyBytes)
 		if err != nil {
-			return utils.BaseErr("req base decode fail", err)
+			return errors.BaseErr("req base decode fail", err)
 		}
 		rb.body = bodyBytes
 	}

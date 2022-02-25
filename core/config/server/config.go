@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/cyejing/shuttle/core/config"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
@@ -58,7 +59,7 @@ func (r Route) GetFilter(name string) (Filter, error) {
 			return filter, nil
 		}
 	}
-	return *new(Filter), utils.NewErrf("not fount filter %s ", name)
+	return *new(Filter), errors.NewErrf("not fount filter %s ", name)
 }
 
 // Instance struct

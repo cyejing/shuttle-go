@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"github.com/cyejing/shuttle/pkg/common"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/logger"
-	"github.com/cyejing/shuttle/pkg/utils"
 	"reflect"
 	"sync"
 )
@@ -118,11 +118,11 @@ func (d *Dispatcher) Dispatch() error {
 		case c := <-d.Channel:
 			err := c.Encode(buf)
 			if err != nil {
-				log.Error(utils.BaseErr("command encode err", err))
+				log.Error(errors.BaseErr("command encode err", err))
 			}
 			_, err = d.Wormhole.Rwc.Write(buf.Bytes())
 			if err != nil {
-				return utils.BaseErr("handle ReqBase write byte fail", err)
+				return errors.BaseErr("handle ReqBase write byte fail", err)
 			}
 		}
 	}
@@ -139,7 +139,7 @@ func (d *Dispatcher) Read() error {
 
 		newOp := typeMap[t]
 		if newOp == nil {
-			log.Error(utils.NewErrf("unknown type op: %v", t))
+			log.Error(errors.NewErrf("unknown type op: %v", t))
 			continue
 		}
 		op := newOp()
@@ -147,12 +147,12 @@ func (d *Dispatcher) Read() error {
 
 		err = op.Decode(buf)
 		if err != nil {
-			log.Error(utils.BaseErrf("op %s decode err", err, reflect.TypeOf(op).Name()))
+			log.Error(errors.BaseErrf("op %s decode err", err, reflect.TypeOf(op).Name()))
 			continue
 		}
 		err = op.Execute(context.WithValue(context.Background(), common.DispatcherKey, d))
 		if err != nil {
-			log.Error(utils.BaseErr("command execute err", err))
+			log.Error(errors.BaseErr("command execute err", err))
 		}
 	}
 }
@@ -193,6 +193,6 @@ func extractDispatcher(ctx context.Context) (*Dispatcher, error) {
 	if d, ok := ctx.Value(common.DispatcherKey).(*Dispatcher); ok {
 		return d, nil
 	} else {
-		return nil, utils.NewErrf("cannot expect context:%v", ctx.Value(common.DispatcherKey))
+		return nil, errors.NewErrf("cannot expect context:%v", ctx.Value(common.DispatcherKey))
 	}
 }

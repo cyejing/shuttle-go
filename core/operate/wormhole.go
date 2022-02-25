@@ -6,7 +6,7 @@ import (
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/core/config/server"
 	"github.com/cyejing/shuttle/pkg/common"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 	"net"
 )
@@ -24,7 +24,7 @@ func (w *Wormhole) Decode(r io.Reader) error {
 	hash := [56]byte{}
 	n, err := r.Read(hash[:])
 	if err != nil || n != 56 {
-		return utils.BaseErr("failed to read hash", err)
+		return errors.BaseErr("failed to read hash", err)
 	}
 	return nil
 }
@@ -35,7 +35,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		if err == io.EOF {
 			return false, nil
 		}
-		return false, utils.BaseErr("peek wormhole bytes fail", err)
+		return false, errors.BaseErr("peek wormhole bytes fail", err)
 	}
 
 	if pw := server.WHPasswords[string(hash)]; pw != nil {
@@ -76,7 +76,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 			if err == io.EOF {
 				log.Infof("name[%s] client close, remote[%v]", d.Name, conn.RemoteAddr())
 			} else {
-				log.Warn(utils.BaseErr("wormhole conn err", err))
+				log.Warn(errors.BaseErr("wormhole conn err", err))
 			}
 		}
 

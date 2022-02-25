@@ -7,7 +7,7 @@ import (
 	"github.com/cyejing/shuttle/core/codec"
 	config "github.com/cyejing/shuttle/core/config/client"
 	operate2 "github.com/cyejing/shuttle/core/operate"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 	"net"
 	"time"
@@ -38,7 +38,7 @@ func loopRunWormhole(c *config.Config) {
 			if err == io.EOF {
 				log.Info("remote conn close, reconnect later")
 			} else {
-				log.Error(utils.BaseErr("remote conn err", err))
+				log.Error(errors.BaseErr("remote conn err", err))
 			}
 		}
 
@@ -50,7 +50,7 @@ func loopRunWormhole(c *config.Config) {
 func dialRemote(c *config.Config) error {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error(utils.NewErrf("run wormhole dial remote catch err %v", err))
+			log.Error(errors.NewErrf("run wormhole dial remote catch err %v", err))
 		}
 	}()
 
@@ -66,7 +66,7 @@ func dialRemote(c *config.Config) error {
 		conn, err = net.Dial(network, addr)
 	}
 	if err != nil {
-		return utils.BaseErr(fmt.Sprintf("dial remote addr fail %s", addr), err)
+		return errors.BaseErr(fmt.Sprintf("dial remote addr fail %s", addr), err)
 	}
 
 	wormhole := &operate2.Wormhole{
@@ -77,11 +77,11 @@ func dialRemote(c *config.Config) error {
 
 	hashBytes, err := wormhole.Encode()
 	if err != nil {
-		return utils.BaseErr("wormhole encode fail", err)
+		return errors.BaseErr("wormhole encode fail", err)
 	}
 	_, err = conn.Write(hashBytes)
 	if err != nil {
-		return utils.Err(err)
+		return errors.CauseErrN(err)
 	}
 
 	err = operate2.NewCliDispatcher(wormhole, c.Name).Connect()

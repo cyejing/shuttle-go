@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/core/operate"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
 	"net"
 	"net/http"
@@ -37,12 +37,12 @@ func (s *HttpServer) Run(ec chan error) {
 	if s.Cert != "" && s.Key != "" {
 		go func() {
 			err := s.ListenAndServeTLS(s.Addr)
-			ec <- utils.BaseErrf("http server run err %s", err, s.Addr)
+			ec <- errors.BaseErrf("http server run err %s", err, s.Addr)
 		}()
 	} else {
 		go func() {
 			err := s.ListenAndServe(s.Addr)
-			ec <- utils.BaseErrf("http server run err %s", err, s.Addr)
+			ec <- errors.BaseErrf("http server run err %s", err, s.Addr)
 		}()
 	}
 }
@@ -52,12 +52,12 @@ func (s *HttpServer) ListenAndServeTLS(addr string) error {
 	cert, err := tls.LoadX509KeyPair(s.Cert, s.Key)
 
 	if err != nil {
-		return utils.BaseErr("start HttpServer fail, check cert and key", err)
+		return errors.BaseErr("start HttpServer fail, check cert and key", err)
 	}
 	config := &tls.Config{Certificates: []tls.Certificate{cert}}
 	ln, err := tls.Listen("tcp", addr, config)
 	if err != nil {
-		return utils.BaseErr("start HttpServer fail", err)
+		return errors.BaseErr("start HttpServer fail", err)
 	}
 	defer ln.Close()
 
@@ -68,7 +68,7 @@ func (s *HttpServer) ListenAndServeTLS(addr string) error {
 func (s *HttpServer) ListenAndServe(addr string) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		return utils.BaseErr("start server fail", err)
+		return errors.BaseErr("start server fail", err)
 	}
 	defer ln.Close()
 
@@ -106,7 +106,7 @@ func (s *HttpServer) server(ln net.Listener) error {
 			defer c.rwc.Close()
 			err := c.handle()
 			if err != nil {
-				if err != io.EOF {
+				if !errors.IsEOF(err) {
 					log.Debug("server handle conn fail : ", err)
 				}
 				return
@@ -145,23 +145,23 @@ func (c *conn) handle() error {
 
 	err := c.handshakeCheck()
 	if err != nil {
-		return utils.BaseErr("handshake check fail", err)
+		return errors.BaseErr("handshake check fail", err)
 	}
 
 	ok, err := codec.PeekTrojan(bufr, c.rwc)
 	if err != nil {
-		return utils.BaseErr("peek trojan fail", err)
+		return errors.BaseErr("peek trojan fail", err)
 	}
 
 	ok, err = operate.PeekWormhole(bufr, c.rwc)
 	if err != nil {
-		return utils.BaseErr("peek wormhole fail", err)
+		return errors.BaseErr("peek wormhole fail", err)
 	}
 
 	if !ok {
 		err = c.handleHttp(err, bufr)
 		if err != nil {
-			return utils.BaseErr("handle http fail", err)
+			return errors.BaseErr("handle http fail", err)
 		}
 	}
 
@@ -175,7 +175,7 @@ func (c *conn) handleHttp(err error, bufr *bufio.Reader) error {
 			return nil
 		}
 		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
-		return utils.BaseErr("read request fail", err)
+		return errors.BaseErr("read request fail", err)
 	}
 	resp := newResponse(req)
 
@@ -186,7 +186,7 @@ func (c *conn) handleHttp(err error, bufr *bufio.Reader) error {
 
 	err = c.finishRequest()
 	if err != nil {
-		return utils.BaseErr("finish request fail", err)
+		return errors.BaseErr("finish request fail", err)
 	}
 	return nil
 }
@@ -213,7 +213,7 @@ func (c *conn) handshakeCheck() error {
 func (c *conn) finishRequest() error {
 	body, err := io.ReadAll(c.resp.Body)
 	if err != nil {
-		return utils.BaseErr("read body fail", err)
+		return errors.BaseErr("read body fail", err)
 	}
 
 	c.resp.ContentLength = int64(len(body))
@@ -226,7 +226,7 @@ func (c *conn) finishRequest() error {
 
 	err = c.resp.Write(c.rwc)
 	if err != nil {
-		return utils.BaseErr("response write fail", err)
+		return errors.BaseErr("response write fail", err)
 	}
 	return nil
 }

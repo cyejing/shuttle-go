@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/cyejing/shuttle/core/config/server"
 	operate2 "github.com/cyejing/shuttle/core/operate"
-	"github.com/cyejing/shuttle/pkg/utils"
+	"github.com/cyejing/shuttle/pkg/errors"
 	"net/http"
 )
 
@@ -122,7 +122,7 @@ func writeResult(resp http.ResponseWriter, result map[string]interface{}) error 
 	body := map[string]interface{}{"code": 0, "result": result}
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
-		return utils.BaseErr("json marshal err", err)
+		return errors.BaseErr("json marshal err", err)
 	}
 	_, err = resp.Write(bodyBytes)
 	return err
