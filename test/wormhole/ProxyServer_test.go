@@ -7,7 +7,7 @@ import (
 )
 
 func TestProxyServer(t *testing.T) {
-	conn, err := net.Dial("tcp", "127.0.0.1:4081")
+	conn, err := net.Dial("tcp", "127.0.0.1:5081")
 	if err != nil {
 		t.Error(err)
 	}

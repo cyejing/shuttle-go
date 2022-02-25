@@ -32,7 +32,7 @@ func (w *Wormhole) Decode(r io.Reader) error {
 func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 	hash, err := br.Peek(56)
 	if err != nil {
-		if err == io.EOF {
+		if errors.IsNetErr(err) {
 			return false, nil
 		}
 		return false, errors.BaseErr("peek wormhole bytes fail", err)
@@ -73,7 +73,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		err = d.Run()
 
 		if err != nil {
-			if err == io.EOF {
+			if errors.IsNetErr(err) {
 				log.Infof("name[%s] client close, remote[%v]", d.Name, conn.RemoteAddr())
 			} else {
 				log.Warn(errors.BaseErr("wormhole conn err", err))

@@ -139,7 +139,7 @@ func (d *Dispatcher) Read() error {
 
 		newOp := typeMap[t]
 		if newOp == nil {
-			log.Error(errors.NewErrf("unknown type op: %v", t))
+			//log.Error(errors.NewErrf("unknown type op: %v", t))
 			continue
 		}
 		op := newOp()

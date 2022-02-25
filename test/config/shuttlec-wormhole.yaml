@@ -1,10 +1,10 @@
 runType: wormhole
 name: unique-name
 sslEnable: false
-remoteAddr: 127.0.0.1:4880
+remoteAddr: 127.0.0.1:5880
 password: 58JCEmvcBkRAk1XkK1iH
 
 ships:
   - name: test
-    remoteAddr: 127.0.0.1:4081
+    remoteAddr: 127.0.0.1:5081
     localAddr: 127.0.0.1:5010

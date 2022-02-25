@@ -3,6 +3,7 @@ package errors
 import (
 	"fmt"
 	"io"
+	"net"
 	"runtime"
 	"strings"
 )
@@ -24,18 +25,26 @@ func (c *CErr) Error() string {
 			return c.Msg
 		}
 	}
-	return fmt.Sprintf("%s\n      at %s:%d : %s", c.Cause.Error(), c.File, c.Line,c.Msg)
+	return fmt.Sprintf("%s\n      at %s:%d : %s", c.Cause.Error(), c.File, c.Line, c.Msg)
 }
 
 func IsEOF(e error) bool {
-	if c,ok := e.(*CErr); ok {
-		l := c.Cause
-		for l.Cause != nil {
-			l = l.Cause
-		}
-		return l == io.EOF
+	if c, ok := e.(*CErr); ok {
+		return c.raw == io.EOF
 	}
 	return e == io.EOF
+}
+func IsNetErr(e error) bool {
+	if c, ok := e.(*CErr); ok {
+		return IsNetErr(c.raw)
+	}
+	if IsEOF(e) {
+		return true
+	}
+	if _, ok := e.(*net.OpError); ok {
+		return true
+	}
+	return false
 }
 
 func NewErr(msg string) *CErr {
@@ -43,8 +52,6 @@ func NewErr(msg string) *CErr {
 		Msg: msg,
 	}
 	for i := 0; i <= 5; i++ {
-		pc, file, line, ok := runtime.Caller(i)
-		println(pc, file, line, ok)
 		if pc, file, line, ok := runtime.Caller(i); ok && !strings.Contains(file, "pkg/errors/error.go") {
 			err.Pc = pc
 			err.File = file
@@ -64,6 +71,7 @@ func CauseErr(e error, msg string) *CErr {
 	nc := NewErr(msg)
 	if c, ok := e.(*CErr); ok {
 		nc.Cause = c
+		nc.raw = c.raw
 	} else {
 		nc.Cause = &CErr{
 			Msg: e.Error(),
@@ -87,5 +95,3 @@ func BaseErr(msg string, e error) *CErr {
 func BaseErrf(msg string, e error, v ...interface{}) *CErr {
 	return CauseErr(e, fmt.Sprintf(msg, v...))
 }
-
-

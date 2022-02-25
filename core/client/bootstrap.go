@@ -8,7 +8,6 @@ import (
 	config "github.com/cyejing/shuttle/core/config/client"
 	operate2 "github.com/cyejing/shuttle/core/operate"
 	"github.com/cyejing/shuttle/pkg/errors"
-	"io"
 	"net"
 	"time"
 )
@@ -35,7 +34,7 @@ func loopRunWormhole(c *config.Config) {
 	for {
 		err := dialRemote(c)
 		if err != nil {
-			if err == io.EOF {
+			if errors.IsNetErr(err) {
 				log.Info("remote conn close, reconnect later")
 			} else {
 				log.Error(errors.BaseErr("remote conn err", err))

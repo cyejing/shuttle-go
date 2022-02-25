@@ -95,7 +95,7 @@ func DialTrojan(config *client.Config, metadata *Metadata) (outbound net.Conn, e
 func PeekTrojan(bufr *bufio.Reader, conn net.Conn) (bool, error) {
 	hash, err := bufr.Peek(56)
 	if err != nil {
-		if err == io.EOF {
+		if errors.IsNetErr(err) {
 			return false, nil
 		}
 		return false, errors.BaseErr("peek trojan bytes fail", err)

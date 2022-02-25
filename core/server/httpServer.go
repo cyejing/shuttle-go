@@ -171,7 +171,7 @@ func (c *conn) handle() error {
 func (c *conn) handleHttp(err error, bufr *bufio.Reader) error {
 	req, err := http.ReadRequest(bufr)
 	if err != nil {
-		if err == io.EOF {
+		if errors.IsNetErr(err) {
 			return nil
 		}
 		io.WriteString(c.rwc, "HTTP/1.0 400 Bad Request\r\n\r\nMalformed HTTP request\n")
@@ -200,7 +200,7 @@ func (c *conn) handshakeCheck() error {
 				re.Conn.Close()
 				return nil
 			}
-			if err == io.EOF {
+			if errors.IsNetErr(err) {
 				return nil
 			}
 			log.Warnf("http: TLS handshake error from %s: %v", c.rwc.RemoteAddr(), err)

@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
 	"github.com/cyejing/shuttle/pkg/errors"
-	"io"
 	"net"
 )
 
@@ -81,11 +80,11 @@ func (e *ExchangeOP) Execute(ctx context.Context) error {
 	if exchangeCtl, ok := d.LoadExchange(e.name); ok {
 		if e.invalid {
 			exchangeCtl.Close()
+			return nil
 		}
 		err := exchangeCtl.Write(e.data)
 		if err != nil {
 			exchangeCtl.SendInvalid()
-			exchangeCtl.Close()
 		}
 	}
 	return nil
@@ -129,8 +128,7 @@ func (c *ExchangeCtlStu) Read() error {
 		i, err := c.Raw.Read(buf)
 		if err != nil {
 			c.SendInvalid()
-			c.Close()
-			if err == io.EOF {
+			if errors.IsNetErr(err) {
 				return nil
 			}
 			return errors.BaseErrf("connCtl %s read err", err, c.Name)
@@ -148,7 +146,10 @@ func (c *ExchangeCtlStu) Close() {
 }
 
 func (c *ExchangeCtlStu) SendInvalid() {
-	invalidOP := NewExchangeOP(c.Name, nil)
-	invalidOP.invalid = true
-	c.dispatcher.Send(invalidOP)
+	if _, ok := c.dispatcher.LoadExchange(c.Name); ok {
+		invalidOP := NewExchangeOP(c.Name, nil)
+		invalidOP.invalid = true
+		c.dispatcher.Send(invalidOP)
+		c.Close()
+	}
 }

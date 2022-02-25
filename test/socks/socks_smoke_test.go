@@ -37,7 +37,7 @@ func TestSocksRequest(t *testing.T) {
 	cli := &http.Client{
 		Transport: &http.Transport{
 			Proxy: func(_ *http.Request) (*url.URL, error) {
-				return url.Parse("socks5://127.0.0.1:4080")
+				return url.Parse("socks5://127.0.0.1:5080")
 			},
 		},
 	}
