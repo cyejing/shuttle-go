@@ -3,6 +3,7 @@ name: unique-name
 sslEnable: false
 remoteAddr: 127.0.0.1:4880
 password: 58JCEmvcBkRAk1XkK1iH
+logFile: logs/shuttlec-wormhole.log
 
 ships:
   - name: test
