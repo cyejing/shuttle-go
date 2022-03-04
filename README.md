@@ -26,10 +26,11 @@ Shuttle目标是让互联更通畅，触达每个地方。
 配置参数
 ```yaml
 #example/shuttles.yaml
-addr: 127.0.0.1:4880  #http端口
-sslAddr: 127.0.0.1:4843 #https端口
-cert: example/s.cyejing.cn_chain.crt #https证书
-key: example/s.cyejing.cn_key.key #https证书
+addrs:
+  - addr: 127.0.0.1:4880
+  - addr: 127.0.0.1:4843
+    cert: example/s.cyejing.cn_chain.crt #https证书
+    key: example/s.cyejing.cn_key.key #https证书
 trojan:
   passwords:
     - sQtfRnfhcNoZYZh1wY9u #对应客户端密码
@@ -56,7 +57,8 @@ Enjoy
 配置参数
 ```yaml
 #example/shuttles.yaml
-addr: 127.0.0.1:4880  #http端口
+addrs:
+  - addr: 127.0.0.1:4880
 wormhole:
   passwords:
     - 58JCEmvcBkRAk1XkK1iH
@@ -89,10 +91,11 @@ ship-tcp -> remoteAddr -> localAddr
 配置参数
 ```yaml
 #example/shuttles.yaml
-addr: 127.0.0.1:4880  #http端口
-sslAddr: 127.0.0.1:4843 #https端口
-cert: example/s.cyejing.cn_chain.crt #https证书
-key: example/s.cyejing.cn_key.key #https证书
+addrs:
+  - addr: 127.0.0.1:4880
+  - addr: 127.0.0.1:4843
+    cert: example/s.cyejing.cn_chain.crt #https证书
+    key: example/s.cyejing.cn_key.key #https证书
 gateway:
   routes:
     - id: APUGW4UDKHgRX8bQuqRErTn9LGwyuFfV
