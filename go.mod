@@ -4,9 +4,10 @@ go 1.17
 
 require (
 	github.com/goinggo/mapstructure v0.0.0-20140717182941-194205d9b4a9
+	github.com/google/gops v0.3.22
 	github.com/google/uuid v1.3.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
