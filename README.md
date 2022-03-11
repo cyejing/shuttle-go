@@ -29,8 +29,8 @@ Shuttle目标是让互联更通畅，触达每个地方。
 addrs:
   - addr: 127.0.0.1:4880
   - addr: 127.0.0.1:4843
-    cert: example/s.cyejing.cn_chain.crt #https证书
-    key: example/s.cyejing.cn_key.key #https证书
+    cert: example/chain.crt #https证书
+    key: example/key.key #https证书
 trojan:
   passwords:
     - sQtfRnfhcNoZYZh1wY9u #对应客户端密码
@@ -94,8 +94,8 @@ ship-tcp -> remoteAddr -> localAddr
 addrs:
   - addr: 127.0.0.1:4880
   - addr: 127.0.0.1:4843
-    cert: example/s.cyejing.cn_chain.crt #https证书
-    key: example/s.cyejing.cn_key.key #https证书
+    cert: example/chain.crt #https证书
+    key: example/key.key #https证书
 gateway:
   routes:
     - id: APUGW4UDKHgRX8bQuqRErTn9LGwyuFfV

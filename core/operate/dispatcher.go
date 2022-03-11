@@ -71,9 +71,10 @@ func newDispatcher(wormhole *Wormhole, name string, key string) *Dispatcher {
 }
 
 func (d *Dispatcher) Run() error {
-	errChan := make(chan error)
+	errChan := make(chan error, 2)
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	go func() {
-		err := d.Dispatch()
+		err := d.Dispatch(ctx)
 		errChan <- err
 	}()
 	go func() {
@@ -81,7 +82,8 @@ func (d *Dispatcher) Run() error {
 		errChan <- err
 	}()
 	err := <-errChan
-
+	cancelFunc()
+	d.Wormhole.Rwc.Close()
 	d.clean()
 	return err
 }
@@ -110,7 +112,7 @@ func (d *Dispatcher) SendAndWait(req ReqOperate) *RespOP {
 	return req.WaitResp()
 }
 
-func (d *Dispatcher) Dispatch() error {
+func (d *Dispatcher) Dispatch(ctx context.Context) error {
 	buf := bytes.NewBuffer([]byte{})
 	for {
 		buf.Reset()
@@ -124,6 +126,8 @@ func (d *Dispatcher) Dispatch() error {
 			if err != nil {
 				return errors.BaseErr("handle ReqBase write byte fail", err)
 			}
+		case <-ctx.Done():
+			return errors.NewErrf("dispatch done %s", d.Name)
 		}
 	}
 }
@@ -139,7 +143,8 @@ func (d *Dispatcher) Read() error {
 
 		newOp := typeMap[t]
 		if newOp == nil {
-			//log.Error(errors.NewErrf("unknown type op: %v", t))
+			buf.Discard(1)
+			log.Error(errors.NewErrf("unknown type: %v", tb[0]))
 			continue
 		}
 		op := newOp()
