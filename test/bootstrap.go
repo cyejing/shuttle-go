@@ -3,8 +3,7 @@ package test
 import (
 	"fmt"
 	"github.com/cyejing/shuttle/core/client"
-	clientC "github.com/cyejing/shuttle/core/config/client"
-	serverC "github.com/cyejing/shuttle/core/config/server"
+	clientC "github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/core/server"
 	"io"
 	"log"
@@ -14,7 +13,7 @@ import (
 )
 
 func StartServer(sf chan int, path string) {
-	c, err := serverC.Load(path)
+	c, err := clientC.LoadServer(path)
 	if err != nil {
 		return
 	}
@@ -27,7 +26,7 @@ func StartServer(sf chan int, path string) {
 }
 
 func StartSocksClient(sf chan int, path string) {
-	c, err := clientC.Load(path)
+	c, err := clientC.LoadServer(path)
 	if err != nil {
 		return
 	}

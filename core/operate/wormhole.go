@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/core/config/server"
+	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/common"
 	"github.com/cyejing/shuttle/pkg/errors"
 	"io"
@@ -38,7 +38,7 @@ func PeekWormhole(br *bufio.Reader, conn net.Conn) (bool, error) {
 		return false, errors.BaseErr("peek wormhole bytes fail", err)
 	}
 
-	if pw := server.WHPasswords[string(hash)]; pw != nil {
+	if pw := config.WormholePasswords[string(hash)]; pw != nil {
 		//log.Infof("wormhole %s authenticated as %s", conn.RemoteAddr(), pw.Raw)
 		wormhole := &Wormhole{
 			Hash: string(hash),

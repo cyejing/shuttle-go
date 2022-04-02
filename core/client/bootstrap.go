@@ -5,14 +5,14 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/cyejing/shuttle/core/codec"
-	config "github.com/cyejing/shuttle/core/config/client"
+	"github.com/cyejing/shuttle/core/config"
 	operate2 "github.com/cyejing/shuttle/core/operate"
 	"github.com/cyejing/shuttle/pkg/errors"
 	"net"
 	"time"
 )
 
-func Run(c *config.Config) {
+func Run(c config.ClientConfig) {
 	switch c.RunType {
 	case "socks":
 		runSocks(c)
@@ -22,7 +22,7 @@ func Run(c *config.Config) {
 	log.Infof("client exit")
 }
 
-func runSocks(c *config.Config) {
+func runSocks(c config.ClientConfig) {
 	socks5 := &Socks5Server{
 		Config:   c,
 		DialFunc: codec.DialTrojan,
@@ -30,7 +30,7 @@ func runSocks(c *config.Config) {
 	panic(socks5.ListenAndServe("tcp", c.SockAddr))
 }
 
-func loopRunWormhole(c *config.Config) {
+func loopRunWormhole(c config.ClientConfig) {
 	for {
 		err := dialRemote(c)
 		if err != nil {
@@ -46,7 +46,7 @@ func loopRunWormhole(c *config.Config) {
 	}
 }
 
-func dialRemote(c *config.Config) error {
+func dialRemote(c config.ClientConfig) error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Error(errors.NewErrf("run wormhole dial remote catch err %v", err))

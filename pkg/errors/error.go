@@ -34,6 +34,7 @@ func IsEOF(e error) bool {
 	}
 	return e == io.EOF
 }
+
 func IsNetErr(e error) bool {
 	if c, ok := e.(*CErr); ok {
 		return IsNetErr(c.raw)
@@ -69,6 +70,9 @@ func NewErrf(msg string, v ...interface{}) *CErr {
 
 func CauseErr(e error, msg string) *CErr {
 	nc := NewErr(msg)
+	if e == nil {
+		return nc
+	}
 	if c, ok := e.(*CErr); ok {
 		nc.Cause = c
 		nc.raw = c.raw

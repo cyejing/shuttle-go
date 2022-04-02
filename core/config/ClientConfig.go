@@ -1,17 +1,14 @@
-package client
+package config
 
 import (
-	"github.com/cyejing/shuttle/core/config"
-	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
 
-var log = logger.NewLog()
 
-//Config struct
-type Config struct {
+//ClientConfig struct
+type ClientConfig struct {
 	RunType    string `yaml:"runType"`
 	Name       string `yaml:"name"`
 	SockAddr   string `yaml:"sockAddr"`
@@ -31,25 +28,25 @@ type Ship struct {
 
 //global config
 var (
-	defaultConfigPath = []string{
+	defaultClientConfigPath = []string{
 		"shuttlec-socks.yaml",
 		"shuttlec-wormhole.yaml",
 		//"example/shuttlec-socks.yaml",
 		"example/shuttlec-wormhole.yaml",
 	}
-	GlobalConfig = &Config{
+	GlobalClientConfig = &ClientConfig{
 		SockAddr:  "127.0.0.1:1080",
 		LogFile:   "logs/shuttlec.log",
 		SSLEnable: true,
 	}
 )
 
-//Load load config
-func Load(path string) (config *Config, err error) {
+//LoadClient load config
+func LoadClient(path string) (config ClientConfig, err error) {
 	var data []byte
 	switch path {
 	case "":
-		for _, config := range defaultConfigPath {
+		for _, config := range defaultClientConfigPath {
 			data, err = ioutil.ReadFile(config)
 			if err != nil {
 				// is ok
@@ -65,24 +62,24 @@ func Load(path string) (config *Config, err error) {
 		}
 		data, err = ioutil.ReadFile(path)
 	}
-	err = yaml.Unmarshal(data, GlobalConfig)
-	return GlobalConfig, err
+	err = yaml.Unmarshal(data, GlobalClientConfig)
+	return *GlobalClientConfig, err
 }
 
 
-func (c *Config) IsSocks() bool {
+func (c *ClientConfig) IsSocks() bool {
 	return "socks" == c.RunType
 }
 
-func (c *Config) IsWormhole() bool {
+func (c *ClientConfig) IsWormhole() bool {
 	return "wormhole" == c.RunType
 }
 
-func (c *Config) GetHash() string {
+func (c *ClientConfig) GetHash() string {
 	if c.IsSocks() {
-		return utils.SHA224String(config.TrojanSalt + c.Password + config.TrojanSalt)
+		return utils.SHA224String(TrojanSalt + c.Password + TrojanSalt)
 	} else if c.IsWormhole() {
-		return utils.SHA224String(config.WormholeSalt + c.Password + config.WormholeSalt)
+		return utils.SHA224String(WormholeSalt + c.Password + WormholeSalt)
 	} else {
 		log.Errorf("unknown run type %s,please check config", c.RunType)
 	}

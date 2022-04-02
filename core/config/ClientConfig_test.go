@@ -1,4 +1,4 @@
-package client
+package config
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadSocks(t *testing.T) {
-	load, err := Load("../../../example/shuttlec-socks.yaml")
+	load, err := LoadServer("../../../example/shuttlec-socks.yaml")
 	if err != nil {
 		t.FailNow()
 		return
@@ -15,7 +15,7 @@ func TestLoadSocks(t *testing.T) {
 }
 
 func TestLoadWormhole(t *testing.T) {
-	load, err := Load("../../../example/shuttlec-wormhole.yaml")
+	load, err := LoadServer("../../../example/shuttlec-wormhole.yaml")
 	if err != nil {
 		t.FailNow()
 		return

@@ -1,18 +1,15 @@
-package server
+package config
 
 import (
-	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/errors"
-	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
 
-var log = logger.NewLog()
 
-//Config struct
-type Config struct {
+//ServerConfig struct
+type ServerConfig struct {
 	Addrs     []Addr `yaml:"addrs"`
 	LogFile   string `yaml:"logFile"`
 	Gateway   Gateway
@@ -35,11 +32,13 @@ type Gateway struct {
 //Wormhole struct
 type Wormhole struct {
 	Passwords []string
+	PasswordMap map[string]*Password
 }
 
 //Trojan struct
 type Trojan struct {
 	Passwords []string
+	PasswordMap map[string]*Password
 }
 
 //Route struct
@@ -87,20 +86,20 @@ type Password struct {
 
 // config var
 var (
-	defaultConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
-	GlobalConfig      = &Config{
+	defaultServerConfigPath = []string{"shuttles.yaml", "shuttles.yaml", "example/shuttles.yaml", "example/shuttles.yml"}
+	GlobalServerConfig      = &ServerConfig{
 		LogFile: "logs/shuttles.log",
 	}
-	Passwords   = make(map[string]*Password)
-	WHPasswords = make(map[string]*Password)
+	//TrojanPasswords   = make(map[string]*Password)
+	//WormholePasswords = make(map[string]*Password)
 )
 
-//Load load config
-func Load(path string) (config *Config, err error) {
+//LoadServer load config
+func LoadServer(path string) (config ServerConfig, err error) {
 	var data []byte
 	switch path {
 	case "":
-		for _, config := range defaultConfigPath {
+		for _, config := range defaultServerConfigPath {
 			data, err = ioutil.ReadFile(config)
 			if err != nil {
 				// is ok
@@ -116,27 +115,27 @@ func Load(path string) (config *Config, err error) {
 		}
 		log.Infof("load config %s", path)
 	}
-	err = yaml.Unmarshal(data, GlobalConfig)
+	err = yaml.Unmarshal(data, GlobalServerConfig)
 	initPasswords()
-	return GlobalConfig, err
+	return *GlobalServerConfig, err
 }
 
 func initPasswords() {
-	for _, raw := range GlobalConfig.Trojan.Passwords {
-		hash := utils.SHA224String(config.TrojanSalt + raw + config.TrojanSalt)
-		Passwords[hash] = &Password{
+	for _, raw := range GlobalServerConfig.Trojan.Passwords {
+		hash := utils.SHA224String(TrojanSalt + raw + TrojanSalt)
+		GlobalServerConfig.Trojan.PasswordMap[hash] = &Password{
 			Raw:  raw,
 			Hash: hash,
 		}
 		hash2 := utils.SHA224String(raw)
-		Passwords[hash2] = &Password{
+		GlobalServerConfig.Trojan.PasswordMap[hash2] = &Password{
 			Raw:  raw,
 			Hash: hash2,
 		}
 	}
-	for _, raw := range GlobalConfig.Wormhole.Passwords {
-		hash := utils.SHA224String(config.WormholeSalt + raw + config.WormholeSalt)
-		WHPasswords[hash] = &Password{
+	for _, raw := range GlobalServerConfig.Wormhole.Passwords {
+		hash := utils.SHA224String(WormholeSalt + raw + WormholeSalt)
+		GlobalServerConfig.Wormhole.PasswordMap[hash] = &Password{
 			Raw:  raw,
 			Hash: hash,
 		}

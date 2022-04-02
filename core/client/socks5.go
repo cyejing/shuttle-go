@@ -2,7 +2,7 @@ package client
 
 import (
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/core/config/client"
+	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"github.com/cyejing/shuttle/pkg/utils"
@@ -13,8 +13,8 @@ var log = logger.NewLog()
 
 //Socks5Server struct
 type Socks5Server struct {
-	Config *client.Config
-	DialFunc func(config *client.Config, metadata *codec.Metadata) (net.Conn, error)
+	Config config.ClientConfig
+	DialFunc func(config config.ClientConfig, metadata *codec.Metadata) (net.Conn, error)
 }
 
 //ListenAndServe listen and serve

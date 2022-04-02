@@ -185,6 +185,7 @@ func (d *Dispatcher) DeleteExchange(name string) {
 }
 
 func (d *Dispatcher) clean() {
+	log.Infof("clean dispatcher :%s", d.Key)
 	DispatcherMap.Delete(d.Key)
 	d.ProxyMap.Range(func(key, value interface{}) bool {
 		if p, ok := value.(*ProxyCtl); ok {

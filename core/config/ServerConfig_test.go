@@ -1,4 +1,4 @@
-package server
+package config
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	load, err := Load("../../../example/shuttles.yaml")
+	load, err := LoadServer("../../../example/shuttles.yaml")
 	if err != nil {
 		t.FailNow()
 		return

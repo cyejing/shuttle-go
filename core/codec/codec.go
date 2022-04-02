@@ -1,7 +1,6 @@
 package codec
 
 import (
-	"bufio"
 	"encoding/binary"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"io"
@@ -19,20 +18,6 @@ type Codec interface {
 	Decode(reader io.Reader) error
 }
 
-type PeekReader struct {
-	R *bufio.Reader
-	I int
-}
-
-func (p *PeekReader) Read(b []byte) (n int, err error) {
-	peek, err := p.R.Peek(p.I + len(b))
-	if err != nil {
-		return 0, err
-	}
-	ci := copy(b, peek[p.I:])
-	p.I += ci
-	return ci, nil
-}
 
 func ReadByte(r io.Reader) (byte, error) {
 	bytes := [1]byte{}

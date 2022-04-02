@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/cyejing/shuttle/core/codec"
-	"github.com/cyejing/shuttle/core/config/client"
+	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
@@ -28,7 +28,7 @@ func init() {
 }
 
 func scanProxyConfig(d *Dispatcher) error {
-	for _, ship := range client.GlobalConfig.Ships {
+	for _, ship := range config.GlobalConfig.Ships {
 		d.Send(NewOpenProxyOP(ship.Name, ship.RemoteAddr, ship.LocalAddr))
 	}
 	return nil
