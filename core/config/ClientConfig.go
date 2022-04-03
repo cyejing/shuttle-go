@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 )
 
-
 //ClientConfig struct
 type ClientConfig struct {
 	RunType    string `yaml:"runType"`
@@ -17,13 +16,13 @@ type ClientConfig struct {
 	Password   string `yaml:"password"`
 	LogFile    string `yaml:"logFile"`
 
-	Ships []Ship
+	Tunnels []Tunnel
 }
 
-type Ship struct {
-	Name string
+type Tunnel struct {
+	Name       string
 	RemoteAddr string `yaml:"remoteAddr"`
-	LocalAddr string `yaml:"localAddr"`
+	LocalAddr  string `yaml:"localAddr"`
 }
 
 //global config
@@ -66,7 +65,6 @@ func LoadClient(path string) (config ClientConfig, err error) {
 	return *GlobalClientConfig, err
 }
 
-
 func (c *ClientConfig) IsSocks() bool {
 	return "socks" == c.RunType
 }
@@ -85,4 +83,3 @@ func (c *ClientConfig) GetHash() string {
 	}
 	return ""
 }
-

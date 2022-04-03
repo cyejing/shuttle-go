@@ -10,7 +10,21 @@ import (
 type PeekChannel struct {
 	config config.ServerConfig
 	raw    net.Conn
-	buf    bufio.Reader
+	proxy  net.Conn
+	buf    *bufio.Reader
+}
+
+func NewPeekChannel(raw net.Conn, c config.ServerConfig) *PeekChannel {
+	proxy, err := net.Dial("tcp", c.Trojan.Addr)
+	if err != nil {
+		log.Warn(errors.BaseErr("dial trojan proxy addr err", err))
+	}
+	return &PeekChannel{
+		config: c,
+		raw:    raw,
+		proxy:  proxy,
+		buf:    bufio.NewReader(raw),
+	}
 }
 
 func (p *PeekChannel) Run() error {
@@ -25,9 +39,8 @@ func (p *PeekChannel) Run() error {
 		return NewWormholeChannel(hash).Run()
 	}
 
-	return NewProxyChannel(p.raw,).Run()
+	return NewProxyChannel(p.raw, p.proxy).Run()
 }
-
 
 func (p *PeekChannel) isTrojan(hash []byte) bool {
 	pw := p.config.Trojan.PasswordMap[string(hash)]
@@ -37,19 +50,4 @@ func (p *PeekChannel) isTrojan(hash []byte) bool {
 func (p *PeekChannel) isWormhole(hash []byte) bool {
 	pw := p.config.Wormhole.PasswordMap[string(hash)]
 	return pw != nil
-}
-
-type PeekReader struct {
-	R *bufio.Reader
-	I int
-}
-
-func (p *PeekReader) Read(b []byte) (n int, err error) {
-	peek, err := p.R.Peek(p.I + len(b))
-	if err != nil {
-		return 0, err
-	}
-	ci := copy(b, peek[p.I:])
-	p.I += ci
-	return ci, nil
 }

@@ -1,18 +1,15 @@
 package config
 
 import (
-	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/utils"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
 
-
 //ServerConfig struct
 type ServerConfig struct {
 	Addrs     []Addr `yaml:"addrs"`
 	LogFile   string `yaml:"logFile"`
-	Gateway   Gateway
 	Instances []Instance
 	Trojan    Trojan
 	Wormhole  Wormhole
@@ -24,41 +21,17 @@ type Addr struct {
 	Key  string `yaml:"key"`
 }
 
-//Gateway struct
-type Gateway struct {
-	Routes []Route
-}
-
 //Wormhole struct
 type Wormhole struct {
-	Passwords []string
+	Passwords   []string
 	PasswordMap map[string]*Password
 }
 
 //Trojan struct
 type Trojan struct {
-	Passwords []string
+	Addr        string `yaml:"addr"`
+	Passwords   []string
 	PasswordMap map[string]*Password
-}
-
-//Route struct
-type Route struct {
-	ID       string `yaml:"id"`
-	Order    int
-	Host     string
-	Path     string
-	Filters  []Filter
-	Loggable bool
-}
-
-// GetFilter route get filter
-func (r Route) GetFilter(name string) (Filter, error) {
-	for _, filter := range r.Filters {
-		if name == filter.Name {
-			return filter, nil
-		}
-	}
-	return *new(Filter), errors.NewErrf("not fount filter %s ", name)
 }
 
 // Instance struct

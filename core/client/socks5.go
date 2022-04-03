@@ -8,12 +8,12 @@ import (
 	"github.com/cyejing/shuttle/pkg/utils"
 	"net"
 )
-var log = logger.NewLog()
 
+var log = logger.NewLog()
 
 //Socks5Server struct
 type Socks5Server struct {
-	Config config.ClientConfig
+	Config   config.ClientConfig
 	DialFunc func(config config.ClientConfig, metadata *codec.Metadata) (net.Conn, error)
 }
 

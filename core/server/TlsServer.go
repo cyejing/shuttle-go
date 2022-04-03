@@ -2,11 +2,13 @@ package server
 
 import (
 	"crypto/tls"
+	"github.com/cyejing/shuttle/core/channel"
 	"github.com/cyejing/shuttle/core/config"
 	"github.com/cyejing/shuttle/pkg/errors"
 	"github.com/cyejing/shuttle/pkg/logger"
 	"net"
 )
+
 var log = logger.NewLog()
 
 func Run(c config.ServerConfig) {
@@ -57,22 +59,13 @@ func (t *TlsServer) ServAndListen() error {
 
 func (t *TlsServer) Serv(ln net.Listener) error {
 	for true {
-		rwc, err := ln.Accept()
+		raw, err := ln.Accept()
 		if err != nil {
 			log.Error(err)
 		}
 
-		channel := &Channel{rwc: rwc}
-		go channel.handle()
+		go channel.NewPeekChannel(raw, t.config).Run()
 	}
 
 	return nil
-}
-
-type Channel struct {
-	rwc net.Conn
-}
-
-func (c *Channel) handle() {
-
 }

@@ -17,8 +17,10 @@ func NewProxyChannel(in, out io.ReadWriter) *ProxyChannel {
 	}
 }
 
-
 func (p ProxyChannel) Run() error {
+	if p.in == nil || p.out == nil {
+		return errors.NewErrf("conn is nil, proxy err, %v %v", p.in, p.out)
+	}
 	ec := make(chan error, 2)
 	go func() {
 		_, err := io.Copy(p.in, p.out)
