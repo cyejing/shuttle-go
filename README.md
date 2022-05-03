@@ -6,9 +6,8 @@ Shuttle让互联网更简单
 
 ## Feature
 
-- 反向代理Http请求
-- Socks5代理通道
-- 长连接代理通道
+- tls加密通信通道
+- 内网穿透, 支持动态调节
 
 ## Architecture
 
