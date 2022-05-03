@@ -2,13 +2,12 @@
 [![ci-test-build](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml/badge.svg)](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cyejing/shuttle)](https://goreportcard.com/report/github.com/cyejing/shuttle)
 
-Shuttle目标是让互联更通畅，触达每个地方。
+Shuttle让互联网更简单
 
 ## Feature
 
-- 反向代理Http请求
-- Socks5代理通道
-- 长连接代理通道
+- tls加密通信通道
+- 内网穿透, 支持动态调节
 
 ## Architecture
 
