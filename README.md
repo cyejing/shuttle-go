@@ -15,7 +15,7 @@ Shuttle让互联网更简单
 ![architecture](/doc/pic/architecture.png)
 
 ## Download
-下载可执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
+下载可执行文件[Release页面](https://github.com/cyejing/shuttle-go/releases)
 
 ## Quick Start 
 
