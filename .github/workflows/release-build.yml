@@ -1,36 +1,102 @@
+name: release-build
+
 on:
   workflow_dispatch:
   push:
     tags:
-      - "v*.*.*"
-name: release-build
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  cross:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            name: shuttle-x86_64-unknown-linux-musl.tgz
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            name: shuttle-aarch64-unknown-linux-musl.tgz
+          - os: ubuntu-latest
+            target: i686-unknown-linux-musl
+            name: shuttle-i686-unknown-linux-musl.tgz
+
+          - os: macOS-latest
+            target: x86_64-apple-darwin
+            name: shuttle-x86_64-apple-darwin.tgz
+          - os: macOS-latest
+            target: aarch64-apple-darwin
+            name: shuttle-aarch64-apple-darwin.tgz
+
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: shuttle-x86_64-pc-windows-msvc.zip
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            name: shuttle-i686-pc-windows-msvc.zip
+
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.17.1
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
 
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Checkout tag
-        run: |
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-          tag_name="${GITHUB_REF##*/}"
-          echo Tag $tag_name
-          git checkout $tag_name
-          echo "TAG_NAME=${tag_name}" >> $GITHUB_ENV
-      - name: Build
-        run: |
-          make release -j$(nproc)
-      - name: Release
-        uses: svenstaro/upload-release-action@v2
+      - name: Setup | Rust
+        uses: actions-rs/toolchain@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.TAG_NAME }}
-          file: ./shuttle-*.zip
-          file_glob: true
+          toolchain: stable
+          override: true
+          profile: minimal
+          target: ${{ matrix.target }}
+
+      # https://github.com/actions/virtual-environments/issues/2557#issuecomment-769611326
+      - if: ${{ matrix.target }} == 'aarch64-apple-darwin'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_12.4.app &&
+          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+
+      - name: Build | Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+          use-cross: true
+
+      - name: Post Build | Prepare artifacts [Windows]
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          xcopy ../../../examples/* examples
+          strip shuttles.exe
+          strip shuttlec.exe
+          7z a ../../../${{ matrix.name }} shuttles.exe shuttlec.exe examples/*
+          cd -
+      - name: Post Build | Prepare artifacts [unix]
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          cp ../../../examples/* examples
+          strip shuttles && strip shuttlec || true
+          tar czvf ../../../${{ matrix.name }} shuttles shuttlec examples/*
+          cd -
+
+      - name: Deploy | Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ matrix.name }}
+          generate_release_notes: true
           prerelease: true
+          token: ${{ secrets.SHUTTLE_GITHUB_TOKEN }}
