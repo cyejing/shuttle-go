@@ -1,5 +1,5 @@
 # Shuttle
-[![ci-test-build](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml/badge.svg)](https://github.com/cyejing/shuttle/actions/workflows/ci-test-build.yml)
+[![ci-test-build](https://github.com/cyejing/shuttle-go/actions/workflows/ci-test-build.yml/badge.svg)](https://github.com/cyejing/shuttle-go/actions/workflows/ci-test-build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cyejing/shuttle)](https://goreportcard.com/report/github.com/cyejing/shuttle)
 
 Shuttle让互联网更简单
@@ -14,7 +14,7 @@ Shuttle让互联网更简单
 ![architecture](/doc/pic/architecture.png)
 
 ## Download
-下载可执行文件[Release页面](https://github.com/cyejing/shuttle/releases)
+下载可执行文件[Release页面](https://github.com/cyejing/shuttle-go/releases)
 
 ## Quick Start 
 
